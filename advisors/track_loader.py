@@ -51,11 +51,16 @@ def list_tracks()->dict: return {"ok":True,"tracks":sorted(TRACKS.keys())}
 
 def add_track(name:str)->dict:
     key=name.strip().lower()
-    if key not in TRACKS: return {"ok":False,"error":f"unknown track '{name}'","available":sorted(TRACKS.keys())}
-    data=TRACKS[key]; p=Path("project/roadmap.md"); p.parent.mkdir(parents=True, exist_ok=True)
+    if key not in TRACKS: 
+        return {"ok":False,"error":f"unknown track '{name}'","available":sorted(TRACKS.keys())}
+    data=TRACKS[key]
+    p=Path("project/roadmap.md")
+    p.parent.mkdir(parents=True, exist_ok=True)
     md=p.read_text(encoding="utf-8") if p.exists() else "# Roadmap\n\n"
     sec=f"## {data['title']}"
-    if sec not in md: md += f"\n{sec}\n"
-    for it in data["items"]: md += f"- {it}\n"
+    if sec not in md: 
+        md += f"\n{sec}\n"
+    for it in data["items"]: 
+        md += f"- {it}\n"
     p.write_text(md, encoding="utf-8")
     return {"ok":True,"added":data["title"],"count":len(data["items"]), "file":str(p)}
