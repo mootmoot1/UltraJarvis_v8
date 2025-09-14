@@ -4,6 +4,7 @@ import shlex
 import subprocess
 import platform
 import logging
+import time
 from datetime import datetime
 from pathlib import Path
 from registry import discover_tools, run_tool
@@ -180,25 +181,68 @@ def _handle_note(t: str):
     note_text = t[5:].strip()
 
     try:
-        from core.persistence import get_persistent_memory
+        from memory.persistence import get_enhanced_memory
 
-        memory = get_persistent_memory()
-        success = memory.add_note(note_text, "manual_note")
+        memory = get_enhanced_memory()
+        success = memory.add_note_with_cache(note_text, "manual_note")
         if success:
             return f"Noted: {note_text}"
         else:
             return "Failed to save note to persistent memory"
     except ImportError:
-        notes = STATE.setdefault("notes", [])
-        notes.append(
-            {
-                "ts": datetime.utcnow().isoformat() + "Z",
-                "note": note_text,
-                "tag": "manual_note",
-            }
-        )
-        _save_mem()
-        return f"Noted: {note_text}"
+        try:
+            from core.persistence import get_persistent_memory
+
+            memory = get_persistent_memory()
+            success = memory.add_note(note_text, "manual_note")
+            if success:
+                return f"Noted: {note_text}"
+            else:
+                return "Failed to save note to persistent memory"
+        except ImportError:
+            notes = STATE.setdefault("notes", [])
+            notes.append(
+                {
+                    "ts": datetime.utcnow().isoformat() + "Z",
+                    "note": note_text,
+                    "tag": "manual_note",
+                }
+            )
+            _save_mem()
+            return f"Noted: {note_text}"
+
+
+def _handle_what_did_we_do():
+    try:
+        from memory.persistence import get_enhanced_memory
+
+        memory = get_enhanced_memory()
+        commands = memory.get_recent_commands(limit=5)
+        if commands:
+            summary = "Recent actions: " + "; ".join(
+                [
+                    f"{cmd['intent']} ({'✓' if cmd['success'] else '✗'})"
+                    for cmd in commands
+                ]
+            )
+            return summary
+        else:
+            return "No recent commands found"
+    except ImportError:
+        return "Command history not available"
+
+
+def _show_progress(step: int, total: int, title: str, status: str, duration: float = 0):
+    status_icon = "[OK]" if status == "ok" else "[FAIL]"
+    duration_str = f" ({duration:.2f}s)" if duration > 0 else ""
+    print(f"[{step}/{total}] {title} {status_icon}{duration_str}")
+
+
+def _handle_error(error: str, hint: str = None):
+    print(f"Error: {error}")
+    if hint:
+        print(f"Advice: {hint}")
+    return f"Error: {error}. {hint or 'Try again or check logs.'}"
 
 
 def loop(
@@ -207,13 +251,18 @@ def loop(
     log_file="logs/uj.log",
     profiling_enabled=False,
 ):
-    log_path = Path(log_file)
-    log_path.parent.mkdir(parents=True, exist_ok=True)
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        handlers=[logging.FileHandler(log_path), logging.StreamHandler()],
-    )
+    try:
+        from runtime.loggingx import setup_structured_logging
+
+        setup_structured_logging(log_file)
+    except ImportError:
+        log_path = Path(log_file)
+        log_path.parent.mkdir(parents=True, exist_ok=True)
+        logging.basicConfig(
+            level=logging.INFO,
+            format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+            handlers=[logging.FileHandler(log_path), logging.StreamHandler()],
+        )
 
     try:
         from tools.speech import init_speech_queue, shutdown_speech
@@ -233,6 +282,13 @@ def loop(
         from core.runtime import init_runtime_session
 
         init_runtime_session()
+    except ImportError:
+        pass
+
+    try:
+        from memory.persistence import get_enhanced_memory
+
+        get_enhanced_memory()
     except ImportError:
         pass
 
@@ -270,7 +326,24 @@ def loop(
             elif s.lower().startswith("run "):
                 reply = _handle_run_tool(s)
             elif s.lower().startswith("note "):
+                start_time = time.time()
                 reply = _handle_note(s)
+                duration = time.time() - start_time
+                try:
+                    from memory.persistence import get_enhanced_memory
+
+                    memory = get_enhanced_memory()
+                    memory.add_command(
+                        "note", s, "Noted:" in reply, int(duration * 1000)
+                    )
+                except ImportError:
+                    pass
+            elif s.lower() in (
+                "what did we just do",
+                "what did we do",
+                "recent actions",
+            ):
+                reply = _handle_what_did_we_do()
             elif s.lower().startswith("remember") or s.lower() == "show memory":
                 reply = _handle_memory(s)
             elif s.lower().startswith("list tracks") or s.lower().startswith(
@@ -316,6 +389,14 @@ def loop(
             from tools.speech import shutdown_speech
 
             shutdown_speech()
+        except ImportError:
+            pass
+
+        try:
+            from memory.persistence import get_enhanced_memory
+
+            memory = get_enhanced_memory()
+            memory.end_session()
         except ImportError:
             pass
 

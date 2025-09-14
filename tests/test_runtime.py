@@ -465,3 +465,118 @@ def test_cache_max_size_eviction():
     assert cache.get("test", "action1", {}) is None
     assert cache.get("test", "action2", {}) is not None
     assert cache.get("test", "action3", {}) is not None
+
+
+def test_metrics_aggregation():
+    """Test metrics collection and aggregation"""
+    from runtime.metrics import MetricsCollector
+
+    collector = MetricsCollector()
+
+    collector.record_tool_execution("test", "action", 100, True, False)
+    collector.record_tool_execution("test", "action", 200, False, True)
+
+    summary = collector.get_summary()
+    assert summary["runs"] == 2
+    assert summary["fails"] == 1
+    assert summary["cache_hits"] == 1
+    assert summary["cache_misses"] == 1
+    assert "test.action" in summary["avg_ms_by_tool"]
+    assert summary["avg_ms_by_tool"]["test.action"] == 150.0
+
+
+def test_lru_cache_behavior():
+    """Test LRU cache eviction and TTL"""
+    from memory.lru import LRUCache
+    import time
+
+    cache = LRUCache(capacity=2, ttl_seconds=1)
+
+    cache.put("key1", "value1")
+    cache.put("key2", "value2")
+    cache.put("key3", "value3")
+
+    assert cache.get("key1") is None
+    assert cache.get("key2") == "value2"
+    assert cache.get("key3") == "value3"
+
+    time.sleep(1.1)
+    assert cache.get("key2") is None
+    assert cache.get("key3") is None
+
+
+def test_structured_logging_output():
+    """Test JSON logging format"""
+    import json
+    import tempfile
+    import logging
+    from runtime.loggingx import setup_structured_logging
+
+    with tempfile.NamedTemporaryFile(mode="w+", suffix=".log", delete=False) as f:
+        setup_structured_logging(f.name)
+        logger = logging.getLogger()
+        logger.info(
+            "test message",
+            extra={
+                "tool": "test.action",
+                "duration_ms": 100,
+                "result": "ok",
+                "cache_hit": True,
+            },
+        )
+
+        f.seek(0)
+        log_line = f.readline().strip()
+        log_data = json.loads(log_line)
+
+        assert "timestamp" in log_data
+        assert log_data["level"] == "INFO"
+        assert log_data["tool"] == "test.action"
+        assert log_data["duration_ms"] == 100
+        assert log_data["result"] == "ok"
+        assert log_data["cache_hit"] is True
+
+
+def test_enhanced_memory_commands():
+    """Test enhanced memory command tracking"""
+    import tempfile
+    import os
+    from memory.persistence import EnhancedMemory
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        test_db = os.path.join(tmpdir, "test_memory.db")
+        memory = EnhancedMemory(db_path=test_db)
+        memory.add_command("note", "test note", True, 50)
+        memory.add_command("search", "test query", False, 100)
+
+        commands = memory.get_recent_commands(limit=5)
+        assert len(commands) == 2
+        assert commands[0]["intent"] == "search"
+        assert commands[0]["success"] is False
+        assert commands[1]["intent"] == "note"
+        assert commands[1]["success"] is True
+
+
+def test_memory_view_command():
+    """Test memory view CLI command functionality"""
+    import tempfile
+    import os
+    from memory.persistence import EnhancedMemory
+    from memory.lru import reset_note_cache
+
+    reset_note_cache()
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        test_db = os.path.join(tmpdir, "test_memory.db")
+        memory = EnhancedMemory(db_path=test_db)
+        memory.add_note_with_cache("test note", "manual_note")
+        memory.add_command("note", "note test note", True, 25)
+
+        notes = memory.persistence.get_notes(limit=50)
+        cached_notes = memory.get_cached_notes()
+        commands = memory.get_recent_commands(limit=10)
+
+        assert len(notes) == 1
+        assert notes[0]["note"] == "test note"
+        assert len(cached_notes) == 1
+        assert len(commands) == 1

@@ -82,6 +82,45 @@ def cmd_track(a):
     print(json.dumps(out))
 
 
+def cmd_metrics(a):
+    from runtime.metrics import get_metrics_collector
+
+    metrics = get_metrics_collector()
+    print(json.dumps(metrics.get_summary(), indent=2))
+
+
+def cmd_memory(a):
+    from memory.persistence import get_enhanced_memory
+
+    memory = get_enhanced_memory()
+
+    if a.subcmd == "view":
+        limit = getattr(a, "limit", 50)
+        tag = getattr(a, "tag", None)
+        notes = memory.persistence.get_notes(limit=limit, tag=tag)
+        cached_notes = memory.get_cached_notes()
+        print(
+            json.dumps(
+                {
+                    "notes": notes,
+                    "cached_notes_count": len(cached_notes),
+                    "recent_commands": memory.get_recent_commands(limit=10),
+                },
+                indent=2,
+            )
+        )
+    elif a.subcmd == "forget-last":
+        n = getattr(a, "n", 1)
+        success = memory.forget_last_conversations(n)
+        if success:
+            print(f"Forgot last {n} conversations")
+        else:
+            print("Failed to forget conversations")
+    elif a.subcmd == "clear-session":
+        memory.end_session()
+        print("Cleared current session")
+
+
 def cmd_jarvis(a):
     import jarvis
 
@@ -174,6 +213,24 @@ def main():
         "--clear-memory", action="store_true", help="Clear all persistent memory"
     )
     p.set_defaults(func=cmd_jarvis)
+
+    p = sub.add_parser("metrics")
+    p.set_defaults(func=cmd_metrics)
+
+    p = sub.add_parser("memory")
+    sp = p.add_subparsers(dest="subcmd", required=True)
+
+    view_p = sp.add_parser("view")
+    view_p.add_argument("--limit", type=int, default=50)
+    view_p.add_argument("--tag", type=str)
+    view_p.set_defaults(func=cmd_memory)
+
+    forget_p = sp.add_parser("forget-last")
+    forget_p.add_argument("n", type=int, nargs="?", default=1)
+    forget_p.set_defaults(func=cmd_memory)
+
+    clear_p = sp.add_parser("clear-session")
+    clear_p.set_defaults(func=cmd_memory)
 
     args = ap.parse_args()
     args.func(args)

@@ -23,6 +23,12 @@ pip install -e .
 # List available tools
 uj tools
 
+# View performance metrics
+uj metrics
+
+# View memory and notes
+uj memory view --limit 20
+
 # Check system status
 uj status
 
@@ -31,6 +37,33 @@ uj-jarvis
 
 # Interactive mode with performance profiling
 uj-jarvis --profile --speech-off --log-file custom.log
+```
+
+### Observability Features
+```bash
+# Structured JSON logging (logs/uj.log)
+{
+  "timestamp": "2025-09-14T13:15:30Z",
+  "level": "INFO",
+  "tool": "roadmap.status",
+  "duration_ms": 45,
+  "result": "ok",
+  "cache_hit": false
+}
+
+# Performance metrics
+uj metrics
+{
+  "runs": 15,
+  "fails": 2,
+  "cache_hits": 8,
+  "cache_misses": 7,
+  "avg_ms_by_tool": {
+    "roadmap.status": 45.2,
+    "websearch.search": 1250.5
+  },
+  "uptime_seconds": 3600
+}
 ```
 
 ## Commands
@@ -44,6 +77,10 @@ uj-jarvis --profile --speech-off --log-file custom.log
 - `uj health [scan|plan|fix]` - Health diagnostics
 - `uj track list` - List available tracks
 - `uj track add NAME` - Add track to roadmap
+- `uj metrics` - Show performance metrics and tool usage statistics
+- `uj memory view [--limit 50 --tag X]` - View stored notes and commands
+- `uj memory forget-last N` - Remove last N conversations
+- `uj memory clear-session` - Clear current session data
 
 ### Interactive Mode (`uj-jarvis`)
 
@@ -59,10 +96,11 @@ Interactive commands:
 - `set goal <text>` - Set current goal
 - `expand phases` - Add phase tasks to roadmap
 - `run <tool> <action> key=val` - Execute tool action
-- `note <text>` - Add note to persistent memory
+- `note <text>` - Add note to persistent memory with LRU caching
 - `remember <text>` - Remember information in persistent storage
 - `show memory` - Display memory summary (both JSON and SQLite)
 - `search <query>` - Search through persistent notes
+- `what did we just do` - Show recent command history
 - `health scan` - Run health diagnostics
 - `quit` / `exit` - Exit interactive mode
 
@@ -93,12 +131,16 @@ Interactive commands:
 - **Persistence**: Data survives application restarts
 - **Search**: Query notes by content with `search <query>` command
 
-### Memory Management
-- **Dual Storage**: JSON for session data, SQLite for persistence
-- **Automatic Backup**: Conversations and notes saved automatically
+### Memory Intelligence
+- **SQLite Schema**: Sessions, notes, and commands tables for structured storage
+- **LRU Cache**: In-memory cache for recent notes (200 items, 24h TTL)
+- **Command Tracking**: All user interactions logged with success/failure and timing
 - **Memory Commands**: 
-  - `--forget-last` - Remove last conversation
-  - `--clear-memory` - Wipe all persistent data
+  - `uj memory view` - Browse notes and command history
+  - `uj memory forget-last N` - Remove last N conversations
+  - `uj memory clear-session` - Clear current session
+  - `--forget-last` - Remove last conversation (legacy)
+  - `--clear-memory` - Wipe all persistent data (legacy)
 
 ### Example Session (Memory Persistence)
 
@@ -278,15 +320,23 @@ ruff check .
 black --check .
 ```
 
-## Performance Optimization
+## Performance Optimization & Observability
 
 ### Caching Benefits
 - **Faster Responses**: Cached tool calls return in ~1ms vs original execution time
 - **Reduced Load**: Prevents redundant expensive operations
 - **Smart Invalidation**: 5-minute TTL ensures fresh data when needed
 
+### Structured Logging & Metrics
+- **JSON Lines Format**: All tool executions logged with timing and cache hit data
+- **Metrics Collection**: Comprehensive statistics on tool usage and performance
+- **Real-time Monitoring**: Track success rates, cache efficiency, and performance trends
+
 ### Profiling Output Example
-```
+```bash
+uj-jarvis --profile
+# ... interactive session ...
+# On exit, shows:
 === Tool Performance Profile ===
 websearch.search:
   Calls: 5
@@ -301,6 +351,19 @@ roadmap.status:
   Min: 0.010s
   Max: 0.025s
 ================================
+
+# View aggregated metrics
+uj metrics
+{
+  "runs": 25,
+  "fails": 3,
+  "cache_hits": 12,
+  "cache_misses": 13,
+  "avg_ms_by_tool": {
+    "roadmap.status": 47.2,
+    "websearch.search": 1205.8
+  }
+}
 ```
 
 ## License

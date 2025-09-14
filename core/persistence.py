@@ -10,7 +10,10 @@ logger = logging.getLogger(__name__)
 
 class PersistentMemory:
     def __init__(self, db_path: str = "data/memory.db"):
-        self.db_path = Path(db_path)
+        import os
+
+        actual_path = os.environ.get("MEMORY_DB_PATH", db_path)
+        self.db_path = Path(actual_path)
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self._init_db()
 
@@ -34,6 +37,29 @@ class PersistentMemory:
                     user_input TEXT NOT NULL,
                     assistant_response TEXT NOT NULL,
                     session_id TEXT
+                )
+            """
+            )
+            conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS sessions (
+                    id TEXT PRIMARY KEY,
+                    started_at TEXT NOT NULL,
+                    ended_at TEXT
+                )
+            """
+            )
+            conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS commands (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    session_id TEXT NOT NULL,
+                    intent TEXT NOT NULL,
+                    text TEXT NOT NULL,
+                    created_at TEXT NOT NULL,
+                    success BOOLEAN NOT NULL,
+                    duration_ms INTEGER NOT NULL,
+                    FOREIGN KEY (session_id) REFERENCES sessions (id)
                 )
             """
             )
@@ -161,3 +187,8 @@ def get_persistent_memory() -> PersistentMemory:
     if _persistent_memory is None:
         _persistent_memory = PersistentMemory()
     return _persistent_memory
+
+
+def reset_persistent_memory():
+    global _persistent_memory
+    _persistent_memory = None

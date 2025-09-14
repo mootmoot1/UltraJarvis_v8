@@ -68,19 +68,37 @@ def run_tool(
             start_time = time.time()
             out = fn(**(args or {}))
             duration = time.time() - start_time
+            duration_ms = int(duration * 1000)
 
             signal.alarm(0)
 
             if _profiling_enabled:
                 _profile_data.setdefault(f"{tool}.{action}", []).append(duration)
 
+            result = out if isinstance(out, dict) else {"ok": True, "result": out}
+            success = result.get("ok", False)
+
+            try:
+                from runtime.metrics import get_metrics_collector
+
+                metrics = get_metrics_collector()
+                metrics.record_tool_execution(
+                    tool, action, duration_ms, success, cached_result is not None
+                )
+            except ImportError:
+                pass
+
             logger.info(
-                f"Tool {tool}.{action} completed in {duration:.2f}s (attempt {attempt + 1})"
+                f"Tool {tool}.{action} completed",
+                extra={
+                    "tool": f"{tool}.{action}",
+                    "duration_ms": duration_ms,
+                    "result": "ok" if success else "fail",
+                    "cache_hit": cached_result is not None,
+                },
             )
 
-            result = out if isinstance(out, dict) else {"ok": True, "result": out}
-
-            if result.get("ok", False):
+            if success:
                 cache.set(tool, action, cache_key_args, result)
 
             return result
@@ -89,8 +107,24 @@ def run_tool(
             signal.alarm(0)
             duration = time.time() - start_time if "start_time" in locals() else 0
 
+            duration_ms = int(duration * 1000) if "duration" in locals() else 0
+
+            try:
+                from runtime.metrics import get_metrics_collector
+
+                metrics = get_metrics_collector()
+                metrics.record_tool_execution(tool, action, duration_ms, False, False)
+            except ImportError:
+                pass
+
             logger.warning(
-                f"Tool {tool}.{action} failed on attempt {attempt + 1}: {e} (duration: {duration:.2f}s)"
+                f"Tool {tool}.{action} failed on attempt {attempt + 1}: {e}",
+                extra={
+                    "tool": f"{tool}.{action}",
+                    "duration_ms": duration_ms,
+                    "result": "fail",
+                    "cache_hit": False,
+                },
             )
 
             try:
