@@ -1,1 +1,5 @@
--e git+https://github.com/mootmoot1/UltraJarvis_v8.git@3069f4910496b33ba75cf8be216b5ea24255c535#egg=ultra_jarvis
+# Development dependencies
+pytest>=7.0.0
+pytest-cov>=4.0.0
+ruff>=0.1.0
+black>=23.0.0
