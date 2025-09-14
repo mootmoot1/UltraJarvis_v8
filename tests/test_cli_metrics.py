@@ -10,7 +10,6 @@ def test_metrics_appears_in_cli_help():
         ["python", "-m", "uc", "--help"],
         capture_output=True,
         text=True,
-        cwd="/home/ubuntu/repos/UltraJarvis_v8",
     )
 
     assert result.returncode == 0
@@ -27,7 +26,6 @@ def test_metrics_command_executes():
         ["python", "-m", "uc", "metrics"],
         capture_output=True,
         text=True,
-        cwd="/home/ubuntu/repos/UltraJarvis_v8",
     )
 
     assert result.returncode == 0
@@ -81,7 +79,6 @@ def test_metrics_command_with_mock(mock_get_collector):
         ["python", "-m", "uc", "metrics"],
         capture_output=True,
         text=True,
-        cwd="/home/ubuntu/repos/UltraJarvis_v8",
     )
 
     assert result.returncode == 0
