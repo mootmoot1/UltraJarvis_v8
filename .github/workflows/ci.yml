@@ -55,7 +55,7 @@ jobs:
         pytest tests/test_performance.py --benchmark-only --benchmark-save=main --benchmark-storage=.benchmarks
         
     - name: Upload benchmark results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: benchmark-results-${{ matrix.python-version }}
