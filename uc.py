@@ -86,7 +86,17 @@ def cmd_metrics(a):
     from runtime.metrics import get_metrics_collector
 
     metrics = get_metrics_collector()
-    print(json.dumps(metrics.get_summary(), indent=2))
+    summary = metrics.get_summary()
+    print(json.dumps(summary, indent=2))
+
+    print("\nQuick Summary:")
+    print(
+        f"  Runs: {summary['runs']}, Fails: {summary['fails']} ({summary['error_rate_percent']}%)"
+    )
+    print(f"  Cache: {summary['cache_hits']} hits, {summary['cache_misses']} misses")
+    print(
+        f"  Latency: p50={summary['overall_latency_p50']:.1f}ms, p95={summary['overall_latency_p95']:.1f}ms"
+    )
 
 
 def cmd_memory(a):

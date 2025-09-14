@@ -580,3 +580,49 @@ def test_memory_view_command():
         assert notes[0]["note"] == "test note"
         assert len(cached_notes) == 1
         assert len(commands) == 1
+
+
+def test_enhanced_metrics_percentiles():
+    """Test enhanced metrics with percentile calculation"""
+    from runtime.metrics import MetricsCollector
+
+    collector = MetricsCollector()
+
+    latencies = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
+    for i, latency in enumerate(latencies):
+        collector.record_tool_execution("test", "action", latency, True, False)
+
+    summary = collector.get_summary()
+
+    assert "overall_latency_p50" in summary
+    assert "overall_latency_p95" in summary
+    assert "error_rate_percent" in summary
+    assert summary["overall_latency_p50"] == 55.0
+    assert summary["error_rate_percent"] == 0.0
+
+
+def test_performance_test_structure():
+    """Test that performance tests are properly structured"""
+    import tests.test_performance
+
+    assert hasattr(tests.test_performance, "test_jarvis_loop_iteration_performance")
+    assert hasattr(tests.test_performance, "test_roadmap_operations_performance")
+    assert hasattr(tests.test_performance, "test_speech_queue_performance")
+
+
+def test_metrics_error_rate_calculation():
+    """Test error rate calculation in enhanced metrics"""
+    from runtime.metrics import MetricsCollector
+
+    collector = MetricsCollector()
+
+    collector.record_tool_execution("test", "action", 100, True, False)
+    collector.record_tool_execution("test", "action", 200, False, False)
+    collector.record_tool_execution("test", "action", 150, True, False)
+    collector.record_tool_execution("test", "action", 300, False, False)
+
+    summary = collector.get_summary()
+
+    assert summary["runs"] == 4
+    assert summary["fails"] == 2
+    assert summary["error_rate_percent"] == 50.0
