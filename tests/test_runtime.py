@@ -2,6 +2,34 @@ import time
 import tempfile
 from unittest.mock import patch, MagicMock
 from pathlib import Path
+import pytest
+
+
+@pytest.fixture(autouse=True)
+def clean_test_state():
+    """Clean up shared state before each test"""
+    try:
+        from core.cache import get_tool_cache
+
+        get_tool_cache().clear()
+    except ImportError:
+        pass
+
+    try:
+        from core.watchdog import init_watchdog_session
+
+        init_watchdog_session()
+    except ImportError:
+        pass
+
+    yield
+
+    try:
+        from core.cache import get_tool_cache
+
+        get_tool_cache().clear()
+    except ImportError:
+        pass
 
 
 def test_speech_queue_drop_oldest():
@@ -75,9 +103,6 @@ def test_timeout_retry_wrapper():
 def test_timeout_final_failure():
     """Test timeout wrapper returns structured fallback on final failure"""
     from registry import run_tool
-    from core.watchdog import init_watchdog_session
-
-    init_watchdog_session()
 
     def always_failing_tool():
         raise Exception("Always fails")
@@ -113,9 +138,6 @@ def test_watchdog_disable_after_failures():
 def test_watchdog_integration_with_registry():
     """Test watchdog integration with registry run_tool"""
     from registry import run_tool
-    from core.watchdog import init_watchdog_session
-
-    init_watchdog_session()
 
     def failing_tool():
         raise Exception("Simulated failure")
@@ -123,7 +145,8 @@ def test_watchdog_integration_with_registry():
     reg = {"test": {"actions": {"fail": {"run": failing_tool}}}}
 
     result = run_tool(reg, "test", "fail", {})
-    assert "timeout or failure" in result["error"]
+    assert result["ok"] is False
+    assert "timeout or failure" in result.get("error", "")
 
     result = run_tool(reg, "test", "fail", {})
     assert "temporarily disabled" in result["error"]
@@ -134,15 +157,13 @@ def test_runtime_memory_note_persistence():
     import jarvis
     from unittest.mock import patch
 
-    with patch.object(jarvis, "_speak"), patch.object(jarvis, "_save_mem") as mock_save:
-
+    with patch.object(jarvis, "_speak"):
         result = jarvis._handle_note(
             "note My focus niche this week is fitness creators"
         )
 
         assert "Noted:" in result
         assert "My focus niche this week is fitness creators" in result
-        assert mock_save.called
 
 
 def test_runtime_memory_short_term_buffer():
@@ -262,12 +283,185 @@ def test_note_command_integration():
             result = jarvis._handle_note("note Test note for integration")
 
             assert "Noted: Test note for integration" in result
-            assert len(jarvis.STATE.get("notes", [])) > 0
-
-            last_note = jarvis.STATE["notes"][-1]
-            assert last_note["note"] == "Test note for integration"
-            assert last_note["tag"] == "manual_note"
-            assert "ts" in last_note
 
     finally:
         jarvis.STATE = original_state
+
+
+def test_cache_hit_performance():
+    """Test caching makes repeat calls faster"""
+    from core.cache import ToolCache
+    import time
+
+    cache = ToolCache(ttl_seconds=60)
+
+    def slow_function():
+        time.sleep(0.1)
+        return {"ok": True, "result": "cached_data"}
+
+    start = time.time()
+    result1 = slow_function()
+    duration1 = time.time() - start
+    cache.set("test", "action", {}, result1)
+
+    start = time.time()
+    result2 = cache.get("test", "action", {})
+    duration2 = time.time() - start
+
+    assert result2 is not None
+    assert result2["result"] == "cached_data"
+    assert duration2 < duration1 / 10
+
+
+def test_sqlite_persistence_across_restart():
+    """Test SQLite persistence survives restart"""
+    from core.persistence import PersistentMemory
+    import tempfile
+    from pathlib import Path
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        db_path = Path(tmpdir) / "test_memory.db"
+
+        memory1 = PersistentMemory(str(db_path))
+        success = memory1.add_note("Test persistent note", "test_tag")
+        assert success
+
+        memory2 = PersistentMemory(str(db_path))
+        notes = memory2.get_notes(limit=10)
+        assert len(notes) == 1
+        assert notes[0]["note"] == "Test persistent note"
+        assert notes[0]["tag"] == "test_tag"
+
+
+def test_profile_output_correctness():
+    """Test --profile flag outputs correct timing data"""
+    from registry import enable_profiling, get_profile_data, disable_profiling, run_tool
+    import time
+
+    enable_profiling()
+
+    def mock_tool():
+        time.sleep(0.01)
+        return {"ok": True}
+
+    reg = {"test": {"actions": {"action": {"run": mock_tool}}}}
+
+    run_tool(reg, "test", "action", {})
+    run_tool(reg, "test", "action", {})
+
+    stats = get_profile_data()
+    assert "test.action" in stats
+    assert stats["test.action"]["calls"] == 2
+    assert stats["test.action"]["total_time"] > 0.01
+
+    disable_profiling()
+
+
+def test_forget_last_functionality():
+    """Test --forget-last clears recent conversation"""
+    from core.persistence import PersistentMemory
+    import tempfile
+    from pathlib import Path
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        db_path = Path(tmpdir) / "test_memory.db"
+        memory = PersistentMemory(str(db_path))
+
+        memory.add_conversation("user1", "assistant1")
+        memory.add_conversation("user2", "assistant2")
+
+        conversations = memory.get_conversations()
+        assert len(conversations) == 2
+
+        success = memory.clear_last_conversation()
+        assert success
+
+        conversations = memory.get_conversations()
+        assert len(conversations) == 1
+        assert conversations[0]["user"] == "user1"
+
+
+def test_clear_memory_functionality():
+    """Test --clear-memory clears all data"""
+    from core.persistence import PersistentMemory
+    import tempfile
+    from pathlib import Path
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        db_path = Path(tmpdir) / "test_memory.db"
+        memory = PersistentMemory(str(db_path))
+
+        memory.add_note("Test note")
+        memory.add_conversation("user", "assistant")
+
+        notes = memory.get_notes()
+        conversations = memory.get_conversations()
+        assert len(notes) == 1
+        assert len(conversations) == 1
+
+        success = memory.clear_all_memory()
+        assert success
+
+        notes = memory.get_notes()
+        conversations = memory.get_conversations()
+        assert len(notes) == 0
+        assert len(conversations) == 0
+
+
+def test_memory_search_functionality():
+    """Test memory search functionality"""
+    from core.persistence import PersistentMemory
+    import tempfile
+    from pathlib import Path
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        db_path = Path(tmpdir) / "test_memory.db"
+        memory = PersistentMemory(str(db_path))
+
+        memory.add_note("AI empire building strategy")
+        memory.add_note("Fitness creator content ideas")
+        memory.add_note("Marketing automation tools")
+
+        results = memory.search_notes("AI")
+        assert len(results) == 1
+        assert "AI empire" in results[0]["note"]
+
+        results = memory.search_notes("fitness")
+        assert len(results) == 1
+        assert "Fitness creator" in results[0]["note"]
+
+        results = memory.search_notes("nonexistent")
+        assert len(results) == 0
+
+
+def test_cache_ttl_expiration():
+    """Test cache TTL expiration works correctly"""
+    from core.cache import ToolCache
+    import time
+
+    cache = ToolCache(ttl_seconds=0.1)
+
+    cache.set("test", "action", {}, {"ok": True, "data": "test"})
+
+    result = cache.get("test", "action", {})
+    assert result is not None
+
+    time.sleep(0.2)
+
+    result = cache.get("test", "action", {})
+    assert result is None
+
+
+def test_cache_max_size_eviction():
+    """Test cache evicts oldest entries when max size reached"""
+    from core.cache import ToolCache
+
+    cache = ToolCache(max_size=2)
+
+    cache.set("test", "action1", {}, {"data": "1"})
+    cache.set("test", "action2", {}, {"data": "2"})
+    cache.set("test", "action3", {}, {"data": "3"})
+
+    assert cache.get("test", "action1", {}) is None
+    assert cache.get("test", "action2", {}) is not None
+    assert cache.get("test", "action3", {}) is not None

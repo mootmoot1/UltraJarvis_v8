@@ -53,6 +53,14 @@ def _append_history(user: str, bot: str):
     except ImportError:
         pass
 
+    try:
+        from core.persistence import get_persistent_memory
+
+        memory = get_persistent_memory()
+        memory.add_conversation(user, bot)
+    except ImportError:
+        pass
+
 
 def _handle_set_goal(t: str):
     goal = t.split(" ", 2)[2].strip() if " " in t else ""
@@ -111,36 +119,94 @@ def _handle_memory(t: str):
     tl = t.lower()
     if tl.startswith("remember "):
         note = t.split(" ", 1)[1]
-        notes = STATE.setdefault("notes", [])
-        notes.append({"ts": datetime.utcnow().isoformat() + "Z", "note": note})
-        _save_mem()
-        return "Remembered."
+        try:
+            from core.persistence import get_persistent_memory
+
+            memory = get_persistent_memory()
+            success = memory.add_note(note, "remember")
+            if success:
+                return "Remembered."
+            else:
+                return "Failed to save to persistent memory"
+        except ImportError:
+            notes = STATE.setdefault("notes", [])
+            notes.append({"ts": datetime.utcnow().isoformat() + "Z", "note": note})
+            _save_mem()
+            return "Remembered."
     if tl == "show memory":
-        return json.dumps(
-            {
-                "goal": STATE.get("goal"),
-                "notes": STATE.get("notes", []),
-                "turns": len(STATE.get("history", [])),
-            }
-        )
-    return "Try: remember <note> | show memory"
+        try:
+            from core.persistence import get_persistent_memory
+
+            memory = get_persistent_memory()
+            notes = memory.get_notes(limit=20)
+            conversations = memory.get_conversations(limit=5)
+            return json.dumps(
+                {
+                    "goal": STATE.get("goal"),
+                    "persistent_notes": len(notes),
+                    "recent_notes": notes[:5],
+                    "persistent_conversations": len(conversations),
+                    "json_notes": STATE.get("notes", []),
+                    "turns": len(STATE.get("history", [])),
+                }
+            )
+        except ImportError:
+            return json.dumps(
+                {
+                    "goal": STATE.get("goal"),
+                    "notes": STATE.get("notes", []),
+                    "turns": len(STATE.get("history", [])),
+                }
+            )
+    if tl.startswith("search "):
+        query = t.split(" ", 1)[1]
+        try:
+            from core.persistence import get_persistent_memory
+
+            memory = get_persistent_memory()
+            results = memory.search_notes(query, limit=10)
+            if results:
+                return f"Found {len(results)} notes: " + "; ".join(
+                    [f"[{r['ts'][:10]}] {r['note'][:50]}..." for r in results]
+                )
+            else:
+                return f"No notes found for '{query}'"
+        except ImportError:
+            return "Search not available without persistent memory"
+    return "Try: remember <note> | show memory | search <query>"
 
 
 def _handle_note(t: str):
     note_text = t[5:].strip()
-    notes = STATE.setdefault("notes", [])
-    notes.append(
-        {
-            "ts": datetime.utcnow().isoformat() + "Z",
-            "note": note_text,
-            "tag": "manual_note",
-        }
-    )
-    _save_mem()
-    return f"Noted: {note_text}"
+
+    try:
+        from core.persistence import get_persistent_memory
+
+        memory = get_persistent_memory()
+        success = memory.add_note(note_text, "manual_note")
+        if success:
+            return f"Noted: {note_text}"
+        else:
+            return "Failed to save note to persistent memory"
+    except ImportError:
+        notes = STATE.setdefault("notes", [])
+        notes.append(
+            {
+                "ts": datetime.utcnow().isoformat() + "Z",
+                "note": note_text,
+                "tag": "manual_note",
+            }
+        )
+        _save_mem()
+        return f"Noted: {note_text}"
 
 
-def loop(speech_enabled=True, watchdog_enabled=True, log_file="logs/uj.log"):
+def loop(
+    speech_enabled=True,
+    watchdog_enabled=True,
+    log_file="logs/uj.log",
+    profiling_enabled=False,
+):
     log_path = Path(log_file)
     log_path.parent.mkdir(parents=True, exist_ok=True)
     logging.basicConfig(
@@ -170,9 +236,18 @@ def loop(speech_enabled=True, watchdog_enabled=True, log_file="logs/uj.log"):
     except ImportError:
         pass
 
+    if profiling_enabled:
+        try:
+            from registry import enable_profiling
+
+            enable_profiling()
+            print("Profiling enabled - tool execution times will be tracked")
+        except ImportError:
+            pass
+
     _load_mem()
     _speak(
-        f"Online. Goal: {STATE.get('goal') or '(none)'} | try: set goal <..>, expand phases, seed, run --batch 25, health scan, list tracks, add track content, show memory, note <text>."
+        f"Online. Goal: {STATE.get('goal') or '(none)'} | try: set goal <..>, expand phases, seed, run --batch 25, health scan, list tracks, add track content, show memory, note <text>, search <query>."
     )
 
     try:
@@ -243,3 +318,11 @@ def loop(speech_enabled=True, watchdog_enabled=True, log_file="logs/uj.log"):
             shutdown_speech()
         except ImportError:
             pass
+
+        if profiling_enabled:
+            try:
+                from registry import print_profile_summary
+
+                print_profile_summary()
+            except ImportError:
+                pass

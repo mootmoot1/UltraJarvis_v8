@@ -85,10 +85,27 @@ def cmd_track(a):
 def cmd_jarvis(a):
     import jarvis
 
+    if a.forget_last:
+        from core.persistence import get_persistent_memory
+
+        memory = get_persistent_memory()
+        memory.clear_last_conversation()
+        print("Cleared last conversation from memory")
+        return
+
+    if a.clear_memory:
+        from core.persistence import get_persistent_memory
+
+        memory = get_persistent_memory()
+        memory.clear_all_memory()
+        print("Cleared all persistent memory")
+        return
+
     jarvis.loop(
         speech_enabled=not a.speech_off,
         watchdog_enabled=not a.no_watchdog,
         log_file=a.log_file,
+        profiling_enabled=a.profile,
     )
 
 
@@ -144,6 +161,17 @@ def main():
     )
     p.add_argument(
         "--log-file", default="logs/uj.log", help="Log file path (default: logs/uj.log)"
+    )
+    p.add_argument(
+        "--profile",
+        action="store_true",
+        help="Enable per-tool execution time profiling",
+    )
+    p.add_argument(
+        "--forget-last", action="store_true", help="Clear last conversation from memory"
+    )
+    p.add_argument(
+        "--clear-memory", action="store_true", help="Clear all persistent memory"
     )
     p.set_defaults(func=cmd_jarvis)
 

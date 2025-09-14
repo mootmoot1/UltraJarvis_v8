@@ -5,8 +5,12 @@ import time
 import signal
 import logging
 from typing import Dict, Any, Callable
+from core.cache import get_tool_cache
 
 logger = logging.getLogger(__name__)
+
+_profiling_enabled = False
+_profile_data: Dict[str, list] = {}
 
 
 def discover_tools() -> Dict[str, dict]:
@@ -33,6 +37,17 @@ def run_tool(
     except ImportError:
         pass
 
+    cache = get_tool_cache()
+    cache_key_args = {
+        k: v for k, v in (args or {}).items() if isinstance(v, (str, int, float, bool))
+    }
+
+    cached_result = cache.get(tool, action, cache_key_args)
+    if cached_result is not None:
+        if _profiling_enabled:
+            _profile_data.setdefault(f"{tool}.{action}", []).append(0.001)
+        return cached_result
+
     t = reg.get(tool)
     if not t:
         return {"ok": False, "error": f"unknown tool: {tool}"}
@@ -56,10 +71,19 @@ def run_tool(
 
             signal.alarm(0)
 
+            if _profiling_enabled:
+                _profile_data.setdefault(f"{tool}.{action}", []).append(duration)
+
             logger.info(
                 f"Tool {tool}.{action} completed in {duration:.2f}s (attempt {attempt + 1})"
             )
-            return out if isinstance(out, dict) else {"ok": True, "result": out}
+
+            result = out if isinstance(out, dict) else {"ok": True, "result": out}
+
+            if result.get("ok", False):
+                cache.set(tool, action, cache_key_args, result)
+
+            return result
 
         except Exception as e:
             signal.alarm(0)
@@ -105,3 +129,54 @@ def run_tool(
 
 def describe_self(reg: Dict[str, dict]) -> dict:
     return {"ok": True, "tools": sorted(reg.keys())}
+
+
+def enable_profiling():
+    global _profiling_enabled
+    _profiling_enabled = True
+    _profile_data.clear()
+
+
+def disable_profiling():
+    global _profiling_enabled
+    _profiling_enabled = False
+
+
+def get_profile_data() -> Dict[str, Dict[str, Any]]:
+    if not _profile_data:
+        return {}
+
+    stats = {}
+    for tool_action, times in _profile_data.items():
+        if times:
+            stats[tool_action] = {
+                "calls": len(times),
+                "total_time": sum(times),
+                "avg_time": sum(times) / len(times),
+                "min_time": min(times),
+                "max_time": max(times),
+            }
+    return stats
+
+
+def print_profile_summary():
+    if not _profiling_enabled:
+        print("Profiling not enabled")
+        return
+
+    stats = get_profile_data()
+    if not stats:
+        print("No profiling data available")
+        return
+
+    print("\n=== Tool Performance Profile ===")
+    for tool_action, data in sorted(
+        stats.items(), key=lambda x: x[1]["total_time"], reverse=True
+    ):
+        print(f"{tool_action}:")
+        print(f"  Calls: {data['calls']}")
+        print(f"  Total: {data['total_time']:.3f}s")
+        print(f"  Avg: {data['avg_time']:.3f}s")
+        print(f"  Min: {data['min_time']:.3f}s")
+        print(f"  Max: {data['max_time']:.3f}s")
+    print("================================\n")
