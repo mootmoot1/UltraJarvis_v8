@@ -43,3 +43,20 @@ jobs:
       
     - name: Test with pytest
       run: pytest -q --cov=tools --cov=advisors --cov-report=term-missing
+      
+    - name: Performance tests with baseline comparison
+      run: |
+        pytest tests/test_performance.py --benchmark-only --benchmark-compare-fail=15% --benchmark-storage=.benchmarks
+      continue-on-error: false
+      
+    - name: Store performance baselines
+      if: github.ref == 'refs/heads/main'
+      run: |
+        pytest tests/test_performance.py --benchmark-only --benchmark-save=main --benchmark-storage=.benchmarks
+        
+    - name: Upload benchmark results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: benchmark-results-${{ matrix.python-version }}
+        path: .benchmarks/

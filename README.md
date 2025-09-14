@@ -366,6 +366,38 @@ uj metrics
 }
 ```
 
+## Performance Budget
+
+UltraJarvis v8 maintains strict performance standards to ensure responsive user experience:
+
+### Performance Targets
+- **Jarvis Loop Iteration**: < 50ms per command (p95)
+- **Roadmap Operations**: < 100ms for seed/run/status (p95)
+- **Speech Queue**: < 10ms for enqueue operations (p95)
+- **Memory Operations**: < 25ms for note/search (p95)
+
+### CI Performance Gate
+- All performance tests must pass with < 15% regression vs baseline
+- Baselines are stored per Python version (3.9, 3.10)
+- Performance tests run on every PR and main branch
+
+### Monitoring
+```bash
+# View current performance metrics
+uj metrics
+
+# Run performance tests locally
+pytest tests/test_performance.py --benchmark-only
+
+# Compare against stored baseline
+pytest tests/test_performance.py --benchmark-compare
+```
+
+### Performance Debugging
+- Use `uj --profile` flag to enable detailed timing
+- Check `logs/uj.log` for structured performance data
+- Monitor p50/p95 latencies in metrics output
+
 ## License
 
 MIT License
