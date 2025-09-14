@@ -1,1 +1,1 @@
-
+-e git+https://github.com/mootmoot1/UltraJarvis_v8.git@77c63406edc11bfee48b15926dba14808e3afef1#egg=ultra_jarvis
