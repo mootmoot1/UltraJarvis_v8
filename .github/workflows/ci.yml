@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, devin/1757855351-sprint-4-ux-observability ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, devin/1757855351-sprint-4-ux-observability ]
 
 jobs:
   test:
