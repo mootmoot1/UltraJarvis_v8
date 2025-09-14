@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ultra-jarvis"
+version = "0.1.0"
+description = "UltraJarvis: roadmap + advisors + tools + conversational loop"
+authors = [{name="Freeman"}]
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+  # Keep this lean; runtime deps (if any) go here.
+  # Your venv/requirements.txt can still pin dev extras.
+]
+
+[tool.setuptools]
+package-dir = {"" = "."}
+packages = ["tools", "advisors"]
+py-modules = ["uc", "jarvis", "registry"]
+include-package-data = true
+
+# Include non-Python files at runtime
+[tool.setuptools.package-data]
+"*" = [
+  "data/*.json",
+  "project/*.md",
+  "logs/*.log"
+]
+
+[project.scripts]
+uj = "uc:main"
+uj-jarvis = "jarvis:loop"

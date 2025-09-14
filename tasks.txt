@@ -1,0 +1,8 @@
+Weekly self-check script (stub)
+Leadgen pipeline stubs
+Content automation stubs
+Reporting/export CSVs
+Outreach templates & guardrails
+Pretty progress UI
+Voice selection & TTS alt backends
+Live websearch adapter
