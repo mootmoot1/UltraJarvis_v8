@@ -46,7 +46,14 @@ jobs:
       
     - name: Performance tests with baseline comparison
       run: |
-        pytest tests/test_performance.py --benchmark-only --benchmark-compare-fail=15% --benchmark-storage=.benchmarks
+        # Run performance tests and compare against baseline if it exists
+        if [ -d ".benchmarks" ] && [ "$(ls -A .benchmarks 2>/dev/null)" ]; then
+          echo "Baseline found, running with comparison..."
+          pytest tests/test_performance.py --benchmark-only --benchmark-compare --benchmark-compare-fail=mean:15% --benchmark-storage=.benchmarks
+        else
+          echo "No baseline found, running without comparison..."
+          pytest tests/test_performance.py --benchmark-only --benchmark-storage=.benchmarks
+        fi
       continue-on-error: false
       
     - name: Store performance baselines
