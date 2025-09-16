@@ -4,7 +4,8 @@ from pathlib import Path
 def _safe(p:str)->Path:
     path=Path(p).expanduser().resolve()
     forbidden={Path("/"),Path("/System"),Path("/bin"),Path("/usr"),Path("/etc")}
-    if any(str(path).startswith(str(f)) for f in forbidden): raise ValueError("protected path")
+    if any(str(path).startswith(str(f)) for f in forbidden) and not str(path).startswith("/tmp/"):
+        raise ValueError("protected path")
     return path
 
 def read(path:str, head:int=20, tail:int=20)->dict:
