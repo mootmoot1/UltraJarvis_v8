@@ -15,7 +15,7 @@ def test_metrics_appears_in_cli_help():
     assert result.returncode == 0
     assert "metrics" in result.stdout
     assert (
-        "{tools,status,seed,run,add,expand,phase,validate,health,track,jarvis,metrics,memory}"
+        "{tools,status,seed,run,add,expand,phase,validate,health,track,jarvis,metrics,memory,devin}"
         in result.stdout
     )
 

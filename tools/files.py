@@ -10,7 +10,7 @@ def _safe_roots() -> list[Path]:
         Path.cwd().resolve(),
         Path("data").resolve(),
         Path("logs").resolve(),
-        Path(tempfile.gettempdir()).resolve(),  # system tmp (macOS/Linux/Windows)
+        Path(tempfile.gettempdir()).resolve(),
     ]
     extra = os.environ.get("UJ_FILES_SAFE_DIRS")
     if extra:
@@ -21,7 +21,6 @@ def _safe_roots() -> list[Path]:
                     roots.append(Path(p).expanduser().resolve())
                 except Exception:
                     pass
-    # de-duplicate while preserving order
     seen = set()
     unique = []
     for r in roots:
@@ -52,7 +51,6 @@ def _safe(p: str) -> Path:
     """Resolve a path and enforce protections on sensitive locations."""
     path = Path(p).expanduser().resolve()
 
-    # Hard-forbidden top-level system directories
     forbidden = {
         Path("/"),
         Path("/System"),
@@ -61,28 +59,19 @@ def _safe(p: str) -> Path:
         Path("/etc"),
     }
 
-    # If it's in a safe root, allow
+    if str(path).startswith("/tmp/"):
+        return path
+
     if _is_allowed(path):
         return path
 
-    # Otherwise, block if it’s under any forbidden root
     if any(str(path).startswith(str(f)) for f in forbidden):
         raise ValueError("protected path")
 
-    # Default: allow paths within the repo (already covered) or user-specified safe dirs
-    # Anything else falls through as 'not explicitly forbidden' (still outside safe roots)
-    # To be conservative, require it to be in the repo tree.
     repo_root = Path.cwd().resolve()
     if not _is_relative_to(path, repo_root):
         raise ValueError("path outside allowed roots")
 
-def _safe(p: str) -> Path:
-    path = Path(p).expanduser().resolve()
-    forbidden = {Path("/"), Path("/System"), Path("/bin"), Path("/usr"), Path("/etc")}
-    # block system paths, but allow /tmp for testing
-    if any(str(path).startswith(str(f)) for f in forbidden) and not str(path).startswith("/tmp/"):
-        raise ValueError("protected path")
-    return path
     return path
 
 
@@ -102,10 +91,37 @@ def read(path: str, head: int = 20, tail: int = 20) -> dict:
         return {"ok": False, "error": str(e)}
 
 
-def _safe(p: str) -> Path:
-    path = Path(p).expanduser().resolve()
-    forbidden = {Path("/"), Path("/System"), Path("/bin"), Path("/usr"), Path("/etc")}
-    # block system paths, but allow /tmp for testing
-    if any(str(path).startswith(str(f)) for f in forbidden) and not str(path).startswith("/tmp/"):
-        raise ValueError("protected path")
-    return path
+def write(path: str, content: str, confirm: bool = False, backup: bool = True) -> dict:
+    """Write content to a file with safety checks."""
+    try:
+        if not confirm:
+            return {
+                "ok": False,
+                "error": "confirmation required",
+                "hint": "pass confirm=True",
+            }
+
+        p = _safe(path)
+        p.parent.mkdir(parents=True, exist_ok=True)
+
+        if p.exists() and backup:
+            backup_path = p.with_suffix(p.suffix + ".bak")
+            backup_path.write_text(p.read_text(encoding="utf-8"), encoding="utf-8")
+
+        p.write_text(content, encoding="utf-8")
+        return {"ok": True, "path": str(p), "bytes": len(content)}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+TOOL_SPEC = {
+    "name": "files",
+    "help": "Guarded file I/O with safety protections",
+    "actions": {
+        "default": {"help": "read file", "run": read},
+        "read": {"help": "preview file content", "run": read},
+        "write": {"help": "write file (requires confirm=True)", "run": write},
+    },
+}
+
+__all__ = ["read", "write", "TOOL_SPEC"]

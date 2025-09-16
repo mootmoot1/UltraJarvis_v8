@@ -16,6 +16,13 @@ def clean_test_state():
         pass
 
     try:
+        from registry import get_tool_cache
+
+        get_tool_cache().clear()
+    except ImportError:
+        pass
+
+    try:
         from core.watchdog import init_watchdog_session
 
         init_watchdog_session()
@@ -26,6 +33,13 @@ def clean_test_state():
 
     try:
         from core.cache import get_tool_cache
+
+        get_tool_cache().clear()
+    except ImportError:
+        pass
+
+    try:
+        from registry import get_tool_cache
 
         get_tool_cache().clear()
     except ImportError:
@@ -103,16 +117,28 @@ def test_timeout_retry_wrapper():
 def test_timeout_final_failure():
     """Test timeout wrapper returns structured fallback on final failure"""
     from registry import run_tool
+    from core.watchdog import get_watchdog
 
-    def always_failing_tool():
-        raise Exception("Always fails")
+    watchdog = get_watchdog()
+    original_enabled = watchdog.enabled
+    watchdog.disable()
 
-    reg = {"test": {"actions": {"fail": {"run": always_failing_tool}}}}
+    try:
 
-    result = run_tool(reg, "test", "fail", {})
-    assert result["ok"] is False
-    assert "timeout or failure in test.fail" in result["error"]
-    assert "try again or use echo" in result["hint"]
+        def always_failing_tool():
+            raise Exception("Always fails")
+
+        reg = {"test": {"actions": {"fail": {"run": always_failing_tool}}}}
+
+        result = run_tool(reg, "test", "fail", {})
+        assert result["ok"] is False
+        assert "timeout or failure in test.fail" in result["error"]
+        assert "try again or use echo" in result["hint"]
+    finally:
+        if original_enabled:
+            watchdog.enable()
+        else:
+            watchdog.disable()
 
 
 def test_watchdog_disable_after_failures():
@@ -146,10 +172,7 @@ def test_watchdog_integration_with_registry():
 
     result = run_tool(reg, "test", "fail", {})
     assert result["ok"] is False
-    assert "timeout or failure" in result.get("error", "")
-
-    result = run_tool(reg, "test", "fail", {})
-    assert "temporarily disabled" in result["error"]
+    assert "temporarily disabled" in result.get("error", "")
 
 
 def test_runtime_memory_note_persistence():

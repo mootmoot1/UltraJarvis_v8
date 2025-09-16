@@ -2,6 +2,8 @@ import subprocess
 import platform
 import logging
 import time
+import json
+import shlex
 from datetime import datetime
 from pathlib import Path
 from registry import discover_tools, run_tool
@@ -28,6 +30,7 @@ def _speak(text: str):
     print(f"Jarvis: {text}")
     try:
         from tools.speech import speak
+
         speak(text)
     except ImportError:
         if platform.system().lower() == "darwin":
@@ -116,6 +119,8 @@ def _handle_memory(t: str):
     tl = t.lower()
     if tl.startswith("remember "):
         note = t.split(" ", 1)[1]
+
+
 def _handle_memory(t: str):
     tl = t.lower()
     if tl.startswith("remember"):
@@ -125,8 +130,13 @@ def _handle_memory(t: str):
         # Prefer persistent memory if available; fallback to JSON file
         try:
             from core.persistence import get_persistent_memory
+
             memory = get_persistent_memory()
-            return "Remembered." if memory.add_note(note, "remember") else "Failed to save to persistent memory"
+            return (
+                "Remembered."
+                if memory.add_note(note, "remember")
+                else "Failed to save to persistent memory"
+            )
         except ImportError:
             notes = STATE.setdefault("notes", [])
             notes.append({"ts": datetime.utcnow().isoformat() + "Z", "note": note})
@@ -137,6 +147,7 @@ def _handle_memory(t: str):
         # Prefer persistent memory summary; fallback to JSON file
         try:
             from core.persistence import get_persistent_memory
+
             memory = get_persistent_memory()
             notes = memory.get_notes(limit=20)
             conversations = memory.get_conversations(limit=5)
@@ -163,6 +174,7 @@ def _handle_memory(t: str):
         query = t.split(" ", 1)[1]
         try:
             from core.persistence import get_persistent_memory
+
             memory = get_persistent_memory()
             results = memory.search_notes(query, limit=10)
             if results:
@@ -185,16 +197,32 @@ def _handle_note(t: str):
     # Prefer enhanced memory with cache; then persistent; else JSON file
     try:
         from memory.persistence import get_enhanced_memory
+
         memory = get_enhanced_memory()
-        return f"Noted: {note_text}" if memory.add_note_with_cache(note_text, "manual_note") else "Failed to save note to persistent memory"
+        return (
+            f"Noted: {note_text}"
+            if memory.add_note_with_cache(note_text, "manual_note")
+            else "Failed to save note to persistent memory"
+        )
     except ImportError:
         try:
             from core.persistence import get_persistent_memory
+
             memory = get_persistent_memory()
-            return f"Noted: {note_text}" if memory.add_note(note_text, "manual_note") else "Failed to save note to persistent memory"
+            return (
+                f"Noted: {note_text}"
+                if memory.add_note(note_text, "manual_note")
+                else "Failed to save note to persistent memory"
+            )
         except ImportError:
             notes = STATE.setdefault("notes", [])
-            notes.append({"ts": datetime.utcnow().isoformat() + "Z", "note": note_text, "tag": "manual_note"})
+            notes.append(
+                {
+                    "ts": datetime.utcnow().isoformat() + "Z",
+                    "note": note_text,
+                    "tag": "manual_note",
+                }
+            )
             _save_mem()
             return f"Noted: {note_text}"
 
@@ -202,11 +230,13 @@ def _handle_note(t: str):
 def _handle_what_did_we_do():
     try:
         from memory.persistence import get_enhanced_memory
+
         memory = get_enhanced_memory()
         commands = memory.get_recent_commands(limit=5)
         if commands:
             return "Recent actions: " + "; ".join(
-                f"{cmd['intent']} ({'✓' if cmd['success'] else '✗'})" for cmd in commands
+                f"{cmd['intent']} ({'✓' if cmd['success'] else '✗'})"
+                for cmd in commands
             )
         return "No recent commands found"
     except ImportError:
@@ -235,6 +265,7 @@ def loop(
     # Structured logging (fallback to basic logging)
     try:
         from runtime.loggingx import setup_structured_logging
+
         setup_structured_logging(log_file)
     except ImportError:
         log_path = Path(log_file)
@@ -248,24 +279,28 @@ def loop(
     # Optional subsystems (best-effort)
     try:
         from tools.speech import init_speech_queue, shutdown_speech  # type: ignore
+
         init_speech_queue(enabled=speech_enabled)
     except ImportError:
         shutdown_speech = None  # noqa: N806
 
     try:
         from core.watchdog import init_watchdog_session  # type: ignore
+
         init_watchdog_session(enabled=watchdog_enabled)
     except ImportError:
         pass
 
     try:
         from core.runtime import init_runtime_session  # type: ignore
+
         init_runtime_session()
     except ImportError:
         pass
 
     try:
         from memory.persistence import get_enhanced_memory  # type: ignore
+
         get_enhanced_memory()  # ensure DB/files are ready
     except ImportError:
         pass
@@ -273,6 +308,7 @@ def loop(
     if profiling_enabled:
         try:
             from registry import enable_profiling  # type: ignore
+
             enable_profiling()
             print("Profiling enabled - tool execution times will be tracked")
         except ImportError:
@@ -281,8 +317,9 @@ def loop(
     _load_mem()
     _speak(
         "Online. Goal: {} | try: set goal <..>, expand phases, seed, run --batch 25, "
-        "health scan, list tracks, add track content, show memory, note <text>, search <query>."
-        .format(STATE.get("goal") or "(none)")
+        "health scan, list tracks, add track content, show memory, note <text>, search <query>.".format(
+            STATE.get("goal") or "(none)"
+        )
     )
 
     try:
@@ -311,16 +348,30 @@ def loop(
                 duration = time.time() - start_time
                 try:
                     from memory.persistence import get_enhanced_memory  # type: ignore
+
                     memory = get_enhanced_memory()
-                    memory.add_command("note", s, "Noted:" in reply, int(duration * 1000))
+                    memory.add_command(
+                        "note", s, "Noted:" in reply, int(duration * 1000)
+                    )
                 except ImportError:
                     pass
-            elif s.lower() in ("what did we just do", "what did we do", "recent actions"):
+            elif s.lower() in (
+                "what did we just do",
+                "what did we do",
+                "recent actions",
+            ):
                 reply = _handle_what_did_we_do()
-            elif s.lower().startswith("remember") or s.lower() == "show memory" or s.lower().startswith("search "):
+            elif (
+                s.lower().startswith("remember")
+                or s.lower() == "show memory"
+                or s.lower().startswith("search ")
+            ):
                 reply = _handle_memory(s)
-            elif s.lower().startswith("list tracks") or s.lower().startswith("add track "):
+            elif s.lower().startswith("list tracks") or s.lower().startswith(
+                "add track "
+            ):
                 from advisors import track_loader as tl
+
                 reply = (
                     ", ".join(tl.list_tracks()["tracks"])
                     if s.lower().startswith("list tracks")
@@ -334,6 +385,7 @@ def loop(
                 )
             elif s.lower() == "phase status":
                 from tools import roadmap as rm
+
                 reply = json.dumps(rm.phase_status())
             elif s.lower() == "seed":
                 reply = json.dumps(run_tool(discover_tools(), "roadmap", "seed", {}))
@@ -342,7 +394,9 @@ def loop(
                     b = int(s.split()[-1])
                 except ValueError:
                     b = 25
-                reply = json.dumps(run_tool(discover_tools(), "roadmap", "run", {"batch": b}))
+                reply = json.dumps(
+                    run_tool(discover_tools(), "roadmap", "run", {"batch": b})
+                )
             elif s.lower() == "status":
                 reply = json.dumps(run_tool(discover_tools(), "roadmap", "status", {}))
             else:
@@ -353,17 +407,19 @@ def loop(
         if profiling_enabled:
             try:
                 from registry import print_profile_summary  # type: ignore
+
                 print_profile_summary()
             except ImportError:
                 pass
         try:
             # only if speech queue exists
-            if 'shutdown_speech' in locals() and shutdown_speech:
+            if "shutdown_speech" in locals() and shutdown_speech:
                 shutdown_speech()
         except Exception:
             pass
         try:
             from memory.persistence import get_enhanced_memory  # type: ignore
+
             memory = get_enhanced_memory()
             memory.end_session()
         except ImportError:

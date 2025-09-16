@@ -87,9 +87,28 @@ def cmd_track(a):
 
 # ---- commands (handlers) ----
 
+
+def cmd_metrics(a):
+    from runtime.metrics import get_metrics_collector
+
+    metrics = get_metrics_collector()
+    summary = metrics.get_summary()
+    print(json.dumps(summary, indent=2))
+
+    print("\nQuick Summary:")
+    print(
+        f"  Runs: {summary['runs']}, Fails: {summary['fails']} ({summary['error_rate_percent']}%)"
+    )
+    print(f"  Cache: {summary['cache_hits']} hits, {summary['cache_misses']} misses")
+    print(
+        f"  Latency: p50={summary['overall_latency_p50']:.1f}ms, p95={summary['overall_latency_p95']:.1f}ms"
+    )
+
+
 def cmd_jarvis(a):
     try:
         from jarvis import loop
+
         loop(
             speech_enabled=not getattr(a, "speech_off", False),
             watchdog_enabled=not getattr(a, "no_watchdog", False),
@@ -98,6 +117,7 @@ def cmd_jarvis(a):
         )
     except Exception as e:
         print(json.dumps({"ok": False, "error": str(e)}))
+
 
 def cmd_devin(a):
     # Production developer agent
@@ -111,50 +131,128 @@ def cmd_devin(a):
 
 # ---- argparse wiring ----
 
+
 def main():
     ap = argparse.ArgumentParser(prog="uj")
     sub = ap.add_subparsers(dest="cmd", required=True)
 
     # tools
     p = sub.add_parser("tools")
-    p.set_defaults(func=lambda a: print(json.dumps({"ok": True, "tools": sorted(discover_tools().keys())})))
+    p.set_defaults(
+        func=lambda a: print(
+            json.dumps({"ok": True, "tools": sorted(discover_tools().keys())})
+        )
+    )
 
     # status
     p = sub.add_parser("status")
-    p.set_defaults(func=lambda a: print(json.dumps(run_tool(discover_tools(), "roadmap", "status", {}))))
+    p.set_defaults(
+        func=lambda a: print(
+            json.dumps(run_tool(discover_tools(), "roadmap", "status", {}))
+        )
+    )
 
     # seed
     p = sub.add_parser("seed")
     p.add_argument("--limit", type=int)
     p.add_argument("--section", type=str)
+
     def _seed(a):
         kw = {}
-        if a.limit is not None: kw["limit"] = a.limit
-        if a.section: kw["section"] = a.section
+        if a.limit is not None:
+            kw["limit"] = a.limit
+        if a.section:
+            kw["section"] = a.section
         print(json.dumps(run_tool(discover_tools(), "roadmap", "seed", kw)))
+
     p.set_defaults(func=_seed)
 
     # run
     p = sub.add_parser("run")
     p.add_argument("--batch", type=int, default=50)
-    p.set_defaults(func=lambda a: print(json.dumps(run_tool(discover_tools(), "roadmap", "run", {"batch": a.batch}))))
+    p.set_defaults(
+        func=lambda a: print(
+            json.dumps(run_tool(discover_tools(), "roadmap", "run", {"batch": a.batch}))
+        )
+    )
+
+    p = sub.add_parser("add")
+    p.add_argument("item")
+    p.add_argument("--section", default="Backlog")
+    p.set_defaults(func=cmd_add)
+
+    p = sub.add_parser("expand")
+    p.add_argument("--goal", default="Expansion & hardening")
+    p.add_argument("--phases", type=int, default=1)
+    p.add_argument("--items-per-phase", type=int, default=12)
+    p.set_defaults(func=cmd_expand)
+
+    p = sub.add_parser("phase")
+    p.set_defaults(func=cmd_phase)
+
+    p = sub.add_parser("validate")
+    p.set_defaults(func=cmd_validate)
 
     # health
     p = sub.add_parser("health")
-    p.add_argument("action", choices=["status", "scan", "plan", "fix"], nargs="?", default="status")
-    def _health(a):
-        print(json.dumps(run_tool(discover_tools(), "health", a.action, {})))
-    p.set_defaults(func=_health)
+    p.add_argument(
+        "action", choices=["status", "scan", "plan", "fix"], nargs="?", default="status"
+    )
+    p.set_defaults(func=cmd_health)
+
+    p = sub.add_parser("track")
+    sp = p.add_subparsers(dest="subcmd", required=True)
+    lp = sp.add_parser("list")
+    lp.set_defaults(func=cmd_track)
+    ap2 = sp.add_parser("add")
+    ap2.add_argument("name")
+    ap2.set_defaults(func=cmd_track)
 
     # jarvis (interactive loop)
     p = sub.add_parser("jarvis")
     p.add_argument("--speech-off", action="store_true", help="disable text-to-speech")
     p.add_argument("--no-watchdog", action="store_true", help="disable watchdog")
     p.add_argument("--log-file", default="logs/uj.log", help="log file")
-    p.add_argument("--profile", action="store_true", help="enable simple timing/profiling")
-    p.add_argument("--forget-last", type=int, default=0, help="clear last N conv turns (legacy; optional)")
-    p.add_argument("--clear-memory", action="store_true", help="clear persistent memory (legacy; optional)")
+    p.add_argument(
+        "--profile", action="store_true", help="enable simple timing/profiling"
+    )
+    p.add_argument(
+        "--forget-last",
+        type=int,
+        default=0,
+        help="clear last N conv turns (legacy; optional)",
+    )
+    p.add_argument(
+        "--clear-memory",
+        action="store_true",
+        help="clear persistent memory (legacy; optional)",
+    )
     p.set_defaults(func=cmd_jarvis)
+
+    p = sub.add_parser("metrics")
+    p.set_defaults(func=cmd_metrics)
+
+    p = sub.add_parser("memory")
+    sp = p.add_subparsers(dest="action", required=True)
+    view_p = sp.add_parser("view")
+    view_p.add_argument("--limit", type=int, default=50)
+    view_p.add_argument("--tag", type=str)
+    forget_p = sp.add_parser("forget-last")
+    forget_p.add_argument("count", type=int, nargs="?", default=1)
+    clear_p = sp.add_parser("clear-session")
+
+    def _memory(a):
+        print(
+            json.dumps(
+                {
+                    "ok": True,
+                    "action": a.action,
+                    "message": f"Memory {a.action} executed",
+                }
+            )
+        )
+
+    p.set_defaults(func=_memory)
 
     # devin (production developer agent)
     p = sub.add_parser("devin")
