@@ -36,7 +36,7 @@ jobs:
           # requirements.txt may be absent or minimal; don't fail if missing
           pip install -r requirements.txt || true
           pip install -e .
-          pip install -q pytest ruff black pytest-cov
+          pip install -q pytest ruff black pytest-cov pytest-benchmark
 
       - name: Lint with ruff
         run: ruff check .
