@@ -26,6 +26,11 @@ def cmd_track(a):
 def cmd_jarvis(a):
     import jarvis; jarvis.loop()
 
+def cmd_devin(a):
+    from tools.devin_agent import devin_agent
+    result = devin_agent(a.task)
+    print(json.dumps(result, indent=2))
+
 def main():
     ap = argparse.ArgumentParser(prog="uc", description="UltraJarvis v8")
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -48,6 +53,8 @@ def main():
     ap2=sp.add_parser("add"); ap2.add_argument("name"); ap2.set_defaults(func=cmd_track)
 
     p=sub.add_parser("jarvis"); p.set_defaults(func=cmd_jarvis)
+    
+    p=sub.add_parser("devin"); p.add_argument("task", help="Natural language task description"); p.set_defaults(func=cmd_devin)
 
     args=ap.parse_args(); args.func(args)
 
