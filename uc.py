@@ -1,6 +1,9 @@
 from __future__ import annotations
 import argparse
 import json
+import logging
+from pathlib import Path
+
 from registry import discover_tools, run_tool
 
 
@@ -82,183 +85,84 @@ def cmd_track(a):
     print(json.dumps(out))
 
 
-def cmd_metrics(a):
-    from runtime.metrics import get_metrics_collector
-
-    metrics = get_metrics_collector()
-    summary = metrics.get_summary()
-    print(json.dumps(summary, indent=2))
-
-    print("\nQuick Summary:")
-    print(
-        f"  Runs: {summary['runs']}, Fails: {summary['fails']} ({summary['error_rate_percent']}%)"
-    )
-    print(f"  Cache: {summary['cache_hits']} hits, {summary['cache_misses']} misses")
-    print(
-        f"  Latency: p50={summary['overall_latency_p50']:.1f}ms, p95={summary['overall_latency_p95']:.1f}ms"
-    )
-
-
-def cmd_memory(a):
-    from memory.persistence import get_enhanced_memory
-
-    memory = get_enhanced_memory()
-
-    if a.subcmd == "view":
-        limit = getattr(a, "limit", 50)
-        tag = getattr(a, "tag", None)
-        notes = memory.persistence.get_notes(limit=limit, tag=tag)
-        cached_notes = memory.get_cached_notes()
-        print(
-            json.dumps(
-                {
-                    "notes": notes,
-                    "cached_notes_count": len(cached_notes),
-                    "recent_commands": memory.get_recent_commands(limit=10),
-                },
-                indent=2,
-            )
-        )
-    elif a.subcmd == "forget-last":
-        n = getattr(a, "n", 1)
-        success = memory.forget_last_conversations(n)
-        if success:
-            print(f"Forgot last {n} conversations")
-        else:
-            print("Failed to forget conversations")
-    elif a.subcmd == "clear-session":
-        memory.end_session()
-        print("Cleared current session")
-
+# ---- commands (handlers) ----
 
 def cmd_jarvis(a):
-    import jarvis
-
-    if a.forget_last:
-        from core.persistence import get_persistent_memory
-
-        memory = get_persistent_memory()
-        memory.clear_last_conversation()
-        print("Cleared last conversation from memory")
-        return
-
-    if a.clear_memory:
-        from core.persistence import get_persistent_memory
-
-        memory = get_persistent_memory()
-        memory.clear_all_memory()
-        print("Cleared all persistent memory")
-        return
-
-    jarvis.loop(
-        speech_enabled=not a.speech_off,
-        watchdog_enabled=not a.no_watchdog,
-        log_file=a.log_file,
-        profiling_enabled=a.profile,
-    )
-
+    try:
+        from jarvis import loop
+        loop(
+            speech_enabled=not getattr(a, "speech_off", False),
+            watchdog_enabled=not getattr(a, "no_watchdog", False),
+            log_file=getattr(a, "log_file", "logs/uj.log"),
+            profiling_enabled=getattr(a, "profile", False),
+        )
+    except Exception as e:
+        print(json.dumps({"ok": False, "error": str(e)}))
 
 def cmd_devin(a):
-    from tools.devin_agent import devin_agent
-    result = devin_agent(a.task)
-    print(json.dumps(result, indent=2))
+    # Production developer agent
+    try:
+        from tools.devin_agent import run_task
+    except Exception as e:
+        print(json.dumps({"ok": False, "error": f"devin agent unavailable: {e}"}))
+        return
+    print(json.dumps(run_task(a.task)))
+
+
+# ---- argparse wiring ----
 
 def main():
-    ap = argparse.ArgumentParser(prog="uc", description="UltraJarvis v8")
+    ap = argparse.ArgumentParser(prog="uj")
     sub = ap.add_subparsers(dest="cmd", required=True)
 
+    # tools
     p = sub.add_parser("tools")
-    p.set_defaults(func=cmd_tools)
-    p = sub.add_parser("status")
-    p.set_defaults(func=cmd_status)
+    p.set_defaults(func=lambda a: print(json.dumps({"ok": True, "tools": sorted(discover_tools().keys())})))
 
+    # status
+    p = sub.add_parser("status")
+    p.set_defaults(func=lambda a: print(json.dumps(run_tool(discover_tools(), "roadmap", "status", {}))))
+
+    # seed
     p = sub.add_parser("seed")
-    p.add_argument("--limit", type=int, default=None)
-    p.add_argument("--section", type=str, default=None)
-    p.set_defaults(func=cmd_seed)
+    p.add_argument("--limit", type=int)
+    p.add_argument("--section", type=str)
+    def _seed(a):
+        kw = {}
+        if a.limit is not None: kw["limit"] = a.limit
+        if a.section: kw["section"] = a.section
+        print(json.dumps(run_tool(discover_tools(), "roadmap", "seed", kw)))
+    p.set_defaults(func=_seed)
+
+    # run
     p = sub.add_parser("run")
     p.add_argument("--batch", type=int, default=50)
-    p.set_defaults(func=cmd_run)
+    p.set_defaults(func=lambda a: print(json.dumps(run_tool(discover_tools(), "roadmap", "run", {"batch": a.batch}))))
 
-    p = sub.add_parser("add")
-    p.add_argument("item")
-    p.add_argument("--section", default="Backlog")
-    p.set_defaults(func=cmd_add)
-    p = sub.add_parser("expand")
-    p.add_argument("--goal", default="Expansion & hardening")
-    p.add_argument("--phases", type=int, default=1)
-    p.add_argument("--items-per-phase", type=int, default=12)
-    p.set_defaults(func=cmd_expand)
-    p = sub.add_parser("phase")
-    p.set_defaults(func=cmd_phase)
-    p = sub.add_parser("validate")
-    p.set_defaults(func=cmd_validate)
-
+    # health
     p = sub.add_parser("health")
-    p.add_argument(
-        "action", nargs="?", choices=["status", "scan", "plan", "fix"], default="status"
-    )
-    p.set_defaults(func=cmd_health)
+    p.add_argument("action", choices=["status", "scan", "plan", "fix"], nargs="?", default="status")
+    def _health(a):
+        print(json.dumps(run_tool(discover_tools(), "health", a.action, {})))
+    p.set_defaults(func=_health)
 
-    p = sub.add_parser("track")
-    sp = p.add_subparsers(dest="subcmd", required=True)
-    lp = sp.add_parser("list")
-    lp.set_defaults(func=cmd_track)
-    ap2 = sp.add_parser("add")
-    ap2.add_argument("name")
-    ap2.set_defaults(func=cmd_track)
-
+    # jarvis (interactive loop)
     p = sub.add_parser("jarvis")
-    p.add_argument("--speech-off", action="store_true", help="Disable text-to-speech")
-    p.add_argument(
-        "--no-watchdog", action="store_true", help="Disable watchdog for debugging"
-    )
-    p.add_argument(
-        "--log-file", default="logs/uj.log", help="Log file path (default: logs/uj.log)"
-    )
-    p.add_argument(
-        "--profile",
-        action="store_true",
-        help="Enable per-tool execution time profiling",
-    )
-    p.add_argument(
-        "--forget-last", action="store_true", help="Clear last conversation from memory"
-    )
-    p.add_argument(
-        "--clear-memory", action="store_true", help="Clear all persistent memory"
-    )
+    p.add_argument("--speech-off", action="store_true", help="disable text-to-speech")
+    p.add_argument("--no-watchdog", action="store_true", help="disable watchdog")
+    p.add_argument("--log-file", default="logs/uj.log", help="log file")
+    p.add_argument("--profile", action="store_true", help="enable simple timing/profiling")
+    p.add_argument("--forget-last", type=int, default=0, help="clear last N conv turns (legacy; optional)")
+    p.add_argument("--clear-memory", action="store_true", help="clear persistent memory (legacy; optional)")
     p.set_defaults(func=cmd_jarvis)
 
-    p = sub.add_parser("metrics")
-    p.set_defaults(func=cmd_metrics)
-
-    p = sub.add_parser("memory")
-    sp = p.add_subparsers(dest="subcmd", required=True)
-
-    view_p = sp.add_parser("view")
-    view_p.add_argument("--limit", type=int, default=50)
-    view_p.add_argument("--tag", type=str)
-    view_p.set_defaults(func=cmd_memory)
-
-    forget_p = sp.add_parser("forget-last")
-    forget_p.add_argument("n", type=int, nargs="?", default=1)
-    forget_p.set_defaults(func=cmd_memory)
-
-    clear_p = sp.add_parser("clear-session")
-    clear_p.set_defaults(func=cmd_memory)
-
-    # Interactive Jarvis loop
-    p = sub.add_parser("jarvis")
-    p.set_defaults(func=cmd_jarvis)
-
-    # Production developer agent (Devin)
+    # devin (production developer agent)
     p = sub.add_parser("devin")
     p.add_argument("task", help="Natural language task description")
     p.set_defaults(func=cmd_devin)
 
     args = ap.parse_args()
     args.func(args)
-    return
 
 
 if __name__ == "__main__":

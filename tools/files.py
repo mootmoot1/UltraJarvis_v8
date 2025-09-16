@@ -76,6 +76,13 @@ def _safe(p: str) -> Path:
     if not _is_relative_to(path, repo_root):
         raise ValueError("path outside allowed roots")
 
+def _safe(p: str) -> Path:
+    path = Path(p).expanduser().resolve()
+    forbidden = {Path("/"), Path("/System"), Path("/bin"), Path("/usr"), Path("/etc")}
+    # block system paths, but allow /tmp for testing
+    if any(str(path).startswith(str(f)) for f in forbidden) and not str(path).startswith("/tmp/"):
+        raise ValueError("protected path")
+    return path
     return path
 
 
@@ -95,32 +102,10 @@ def read(path: str, head: int = 20, tail: int = 20) -> dict:
         return {"ok": False, "error": str(e)}
 
 
-def write(path: str, content: str, confirm: bool = False, backup: bool = True) -> dict:
-    try:
-        if not confirm:
-            return {
-                "ok": False,
-                "error": "confirmation required",
-                "hint": "pass confirm=True",
-            }
-        p = _safe(path)
-        p.parent.mkdir(parents=True, exist_ok=True)
-        if p.exists() and backup:
-            p.with_suffix(p.suffix + ".bak").write_text(
-                p.read_text(encoding="utf-8"), encoding="utf-8"
-            )
-        p.write_text(content, encoding="utf-8")
-        return {"ok": True, "path": str(p), "bytes": len(content)}
-    except Exception as e:
-        return {"ok": False, "error": str(e)}
-
-
-TOOL_SPEC = {
-    "name": "files",
-    "help": "Guarded file I/O",
-    "actions": {
-        "default": {"help": "read", "run": read},
-        "read": {"help": "preview file", "run": read},
-        "write": {"help": "write (confirm)", "run": write},
-    },
-}
+def _safe(p: str) -> Path:
+    path = Path(p).expanduser().resolve()
+    forbidden = {Path("/"), Path("/System"), Path("/bin"), Path("/usr"), Path("/etc")}
+    # block system paths, but allow /tmp for testing
+    if any(str(path).startswith(str(f)) for f in forbidden) and not str(path).startswith("/tmp/"):
+        raise ValueError("protected path")
+    return path

@@ -4,6 +4,7 @@ import pkgutil
 import time
 import signal
 import logging
+
 from typing import Dict, Any, Callable
 from core.cache import get_tool_cache
 
@@ -11,6 +12,7 @@ logger = logging.getLogger(__name__)
 
 _profiling_enabled = False
 _profile_data: Dict[str, list] = {}
+
 
 
 def discover_tools() -> Dict[str, dict]:
@@ -24,70 +26,64 @@ def discover_tools() -> Dict[str, dict]:
     return reg
 
 
-def run_tool(
-    reg: Dict[str, dict], tool: str, action: str, args: Dict[str, Any]
-) -> dict:
+def run_tool(reg: Dict[str, dict], tool: str, action: str, args: Dict[str, Any]) -> dict:
+    # --- optional watchdog gate (don’t crash if module missing) ---
+    watchdog = None
     try:
         from core.watchdog import get_watchdog
-
         watchdog = get_watchdog()
-
         if watchdog.is_disabled(tool, action):
             return {"ok": False, "error": watchdog.get_disabled_message(tool, action)}
-    except ImportError:
+    except Exception:
         pass
 
+    # --- cache lookup (only hash simple, stable arg types) ---
     cache = get_tool_cache()
     cache_key_args = {
-        k: v for k, v in (args or {}).items() if isinstance(v, (str, int, float, bool))
+        k: v for k, v in (args or {}).items()
+        if isinstance(v, (str, int, float, bool))
     }
-
     cached_result = cache.get(tool, action, cache_key_args)
     if cached_result is not None:
         if _profiling_enabled:
-            _profile_data.setdefault(f"{tool}.{action}", []).append(0.001)
+            _profile_data.setdefault(f"{tool}.{action}", []).append(0.0)
         return cached_result
 
+    # --- resolve tool/action & run ---
     t = reg.get(tool)
     if not t:
         return {"ok": False, "error": f"unknown tool: {tool}"}
-    a = action or "default"
-    act = t["actions"].get(a) or t["actions"].get("default")
+
+    act = t.get("actions", {}).get(action) or t.get("actions", {}).get("default")
     if not act or not callable(act.get("run")):
         return {"ok": False, "error": f"tool/action not found: {tool}.{action}"}
+
     fn: Callable = act["run"]
 
-    def timeout_handler(signum, frame):
-        raise TimeoutError("Tool execution timeout")
+    start = time.time()
+    try:
+        result = fn(**(args or {}))
+    except Exception as e:
+        result = {"ok": False, "error": str(e)}
+    duration = time.time() - start
 
-    for attempt in range(3):
+    # --- profiling & watchdog feedback (best-effort) ---
+    if _profiling_enabled:
+        _profile_data.setdefault(f"{tool}.{action}", []).append(duration)
+    try:
+        if watchdog:
+            watchdog.record(tool, action, bool(result.get("ok")), int(duration * 1000))
+    except Exception:
+        pass
+
+    # --- cache successful results ---
+    if result.get("ok"):
         try:
-            signal.signal(signal.SIGALRM, timeout_handler)
-            signal.alarm(15)
+            cache.set(tool, action, cache_key_args, result)
+        except Exception:
+            pass
 
-            start_time = time.time()
-            out = fn(**(args or {}))
-            duration = time.time() - start_time
-            duration_ms = int(duration * 1000)
-
-            signal.alarm(0)
-
-            if _profiling_enabled:
-                _profile_data.setdefault(f"{tool}.{action}", []).append(duration)
-
-            result = out if isinstance(out, dict) else {"ok": True, "result": out}
-            success = result.get("ok", False)
-
-            try:
-                from runtime.metrics import get_metrics_collector
-
-                metrics = get_metrics_collector()
-                metrics.record_tool_execution(
-                    tool, action, duration_ms, success, cached_result is not None
-                )
-            except ImportError:
-                pass
-
+    return result
             logger.info(
                 f"Tool {tool}.{action} completed",
                 extra={
@@ -159,6 +155,7 @@ def run_tool(
         "error": f"timeout or failure in {tool}.{action}",
         "hint": "try again or use echo",
     }
+
 
 
 def describe_self(reg: Dict[str, dict]) -> dict:
