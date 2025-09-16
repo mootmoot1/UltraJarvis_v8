@@ -5,18 +5,18 @@ from unittest.mock import patch, MagicMock
 
 def test_files_rw(tmp_path):
     from tools import files
-    from unittest.mock import patch
 
-    with patch.object(files, "_safe") as mock_safe:
-        test_file = tmp_path / "x.txt"
-        mock_safe.return_value = test_file
+    # Use tmp_path and patch _safe so the guard allows writing there
+    test_file = tmp_path / "x.txt"
+    p = str(test_file)
 
-        p = str(test_file)
+    # Without confirm -> should be blocked
+    result = files.write(p, "hi")
+    assert not result.get("ok")
+    assert "confirmation" in result.get("error", "")
 
-        result = files.write(p, "hi")
-        assert not result.get("ok")
-        assert "confirmation required" in result.get("error", "")
-
+    # With confirm -> allowed
+    with patch.object(files, "_safe", return_value=test_file):
         result = files.write(p, "hi", confirm=True)
         assert result.get("ok")
 
@@ -78,9 +78,7 @@ def test_jarvis_loop_parsing():
                 patch.object(jarvis, "_save_mem"),
                 patch.object(jarvis, "_append_history"),
             ):
-
                 jarvis.loop()
-
                 assert mock_speak.call_count >= 2
                 mock_speak.assert_any_call("Goodbye.")
 
@@ -94,7 +92,6 @@ def test_health_advisor_scan():
         patch("advisors.health_advisor.LOG") as mock_log,
         patch.object(health_advisor, "_log"),
     ):
-
         mock_state.write_text = MagicMock()
         mock_log.write_text = MagicMock()
 
@@ -123,7 +120,6 @@ def test_health_advisor_status():
         patch("advisors.health_advisor.STATE") as mock_state_path,
         patch("advisors.health_advisor.LOG") as mock_log_path,
     ):
-
         mock_state_path.exists.return_value = True
         mock_state_path.read_text.return_value = json.dumps(mock_state)
         mock_log_path.exists.return_value = True
@@ -143,9 +139,7 @@ def test_registry_discover_tools():
     from registry import discover_tools
 
     tools = discover_tools()
-
     assert isinstance(tools, dict)
-
     assert "roadmap" in tools
     assert "name" in tools["roadmap"]
     assert "actions" in tools["roadmap"]
@@ -171,14 +165,14 @@ def test_registry_run_tool():
     assert "tool/action not found" in result["error"]
 
 
-def test_roadmap_additional_functions():
-    """Test additional roadmap functions for better coverage"""
+def test_roadmap_additional_functions(tmp_path):
+    """Additional roadmap functions"""
     from tools import roadmap
 
     original_rm = roadmap.RM
     original_q = roadmap.Q
-    temp_rm = Path("/tmp/test_roadmap.md")
-    temp_q = Path("/tmp/test_tasks.txt")
+    temp_rm = tmp_path / "test_roadmap.md"
+    temp_q = tmp_path / "test_tasks.txt"
 
     try:
         roadmap.RM = temp_rm
@@ -196,36 +190,27 @@ def test_roadmap_additional_functions():
 
         result = roadmap.add("New task", section="Phase 1")
         assert result["ok"] is True
-
     finally:
         roadmap.RM = original_rm
         roadmap.Q = original_q
-        if temp_rm.exists():
-            temp_rm.unlink()
-        if temp_q.exists():
-            temp_q.unlink()
 
 
-def test_files_additional_functions():
-    """Test additional files functions for better coverage"""
+def test_files_additional_functions(tmp_path):
+    """Additional files functions"""
     from tools import files
-    from unittest.mock import patch
 
-    with patch.object(files, "_safe") as mock_safe:
-        test_file = Path("/tmp/test_read.txt")
-        test_file.write_text("test content")
-        mock_safe.return_value = test_file
+    test_file = tmp_path / "test_read.txt"
+    test_file.write_text("test content")
 
+    with patch.object(files, "_safe", return_value=test_file):
         result = files.read(str(test_file))
         assert result["ok"] is True
         assert "preview" in result
         assert result["lines"] == 1
 
-        test_file.unlink()
-
 
 def test_browser_tool():
-    """Test browser tool for coverage"""
+    """Browser tool coverage"""
     from tools import browser
 
     result = browser.open_url("https://example.com")
@@ -234,7 +219,7 @@ def test_browser_tool():
 
 
 def test_email_tool():
-    """Test email tool for coverage"""
+    """Email tool coverage"""
     from tools import email
 
     result = email.send("test@example.com", "Test", "Body")
@@ -243,7 +228,7 @@ def test_email_tool():
 
 
 def test_automation_tool():
-    """Test automation tool for coverage"""
+    """Automation tool coverage"""
     from tools import automation
 
     result = automation.paste("test text")
@@ -252,7 +237,7 @@ def test_automation_tool():
 
 
 def test_os_control_tool():
-    """Test os_control tool for coverage"""
+    """OS control tool coverage"""
     from tools import os_control
 
     result = os_control.volume(50)
@@ -265,15 +250,13 @@ def test_os_control_tool():
 
 
 def test_health_advisor_additional():
-    """Test additional health_advisor functions for coverage"""
+    """Additional health_advisor functions"""
     from advisors import health_advisor
-    from unittest.mock import patch, MagicMock
 
     with (
         patch("advisors.health_advisor.STATE") as mock_state,
         patch("advisors.health_advisor.LOG") as mock_log,
     ):
-
         mock_state.write_text = MagicMock()
         mock_log.write_text = MagicMock()
 
@@ -287,7 +270,7 @@ def test_health_advisor_additional():
 
 
 def test_phase_advisor():
-    """Test phase_advisor for coverage"""
+    """phase_advisor coverage"""
     from advisors import phase_advisor
 
     result = phase_advisor.suggest_tasks(max_items=5)
@@ -305,7 +288,7 @@ def test_phase_advisor():
 
 
 def test_track_loader():
-    """Test track_loader for coverage"""
+    """track_loader coverage"""
     from advisors import track_loader
 
     result = track_loader.list_tracks()
