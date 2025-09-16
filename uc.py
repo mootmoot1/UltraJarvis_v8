@@ -247,10 +247,6 @@ def main():
     clear_p = sp.add_parser("clear-session")
     clear_p.set_defaults(func=cmd_memory)
 
-    # Interactive Jarvis loop
-    p = sub.add_parser("jarvis")
-    p.set_defaults(func=cmd_jarvis)
-
     # Production developer agent (Devin)
     p = sub.add_parser("devin")
     p.add_argument("task", help="Natural language task description")
