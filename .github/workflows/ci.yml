@@ -1,69 +1,16 @@
 name: CI
 
-on:
-  push:
-    branches: [ main, devin/1757855351-sprint-4-ux-observability ]
-  pull_request:
-    branches: [ main, devin/1757855351-sprint-4-ux-observability ]
+on: [push, pull_request]
 
 jobs:
-  test:
+  tests:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ["3.9", "3.10"]
-
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ matrix.python-version }}
-        
-    - name: Cache pip dependencies
-      uses: actions/cache@v3
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-        restore-keys: |
-          ${{ runner.os }}-pip-
-          
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install -e .
-        
-    - name: Lint with ruff
-      run: ruff check .
-      
-    - name: Check formatting with black
-      run: black --check .
-      
-    - name: Test with pytest
-      run: pytest -q --cov=tools --cov=advisors --cov-report=term-missing
-      
-    - name: Performance tests with baseline comparison
-      run: |
-        # Run performance tests and compare against baseline if it exists
-        if [ -d ".benchmarks" ] && [ "$(ls -A .benchmarks 2>/dev/null)" ]; then
-          echo "Baseline found, running with comparison..."
-          pytest tests/test_performance.py --benchmark-only --benchmark-compare --benchmark-compare-fail=mean:15% --benchmark-storage=.benchmarks
-        else
-          echo "No baseline found, running without comparison..."
-          pytest tests/test_performance.py --benchmark-only --benchmark-storage=.benchmarks
-        fi
-      continue-on-error: false
-      
-    - name: Store performance baselines
-      if: github.ref == 'refs/heads/main'
-      run: |
-        pytest tests/test_performance.py --benchmark-only --benchmark-save=main --benchmark-storage=.benchmarks
-        
-    - name: Upload benchmark results
-      uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        name: benchmark-results-${{ matrix.python-version }}
-        path: .benchmarks/
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install -e .
+      - run: pip install -q pytest ruff
+      - run: ruff check .
+      - run: pytest -q

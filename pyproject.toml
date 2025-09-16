@@ -10,8 +10,7 @@ authors = [{name="Freeman"}]
 readme = "README.md"
 requires-python = ">=3.9"
 dependencies = [
-  # Keep this lean; runtime deps (if any) go here.
-  # Your venv/requirements.txt can still pin dev extras.
+  "requests>=2.25.0"
 ]
 
 [tool.setuptools]
@@ -31,3 +30,8 @@ include-package-data = true
 [project.scripts]
 uj = "uc:main"
 uj-jarvis = "jarvis:loop"
+
+[tool.ruff]
+include = ["tools", "core", "advisors", "memory", "runtime", "tests"]
+exclude = [".venv", "site-packages", "demos", "ultra_jarvis.egg-info"]
+line-length = 100

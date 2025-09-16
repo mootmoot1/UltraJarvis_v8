@@ -158,6 +158,11 @@ def cmd_jarvis(a):
     )
 
 
+def cmd_devin(a):
+    from tools.devin_agent import devin_agent
+    result = devin_agent(a.task)
+    print(json.dumps(result, indent=2))
+
 def main():
     ap = argparse.ArgumentParser(prog="uc", description="UltraJarvis v8")
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -242,8 +247,18 @@ def main():
     clear_p = sp.add_parser("clear-session")
     clear_p.set_defaults(func=cmd_memory)
 
+    # Interactive Jarvis loop
+    p = sub.add_parser("jarvis")
+    p.set_defaults(func=cmd_jarvis)
+
+    # Production developer agent (Devin)
+    p = sub.add_parser("devin")
+    p.add_argument("task", help="Natural language task description")
+    p.set_defaults(func=cmd_devin)
+
     args = ap.parse_args()
     args.func(args)
+    return
 
 
 if __name__ == "__main__":
