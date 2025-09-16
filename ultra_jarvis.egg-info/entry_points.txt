@@ -1,3 +1,0 @@
-[console_scripts]
-uj = uc:main
-uj-jarvis = jarvis:loop
