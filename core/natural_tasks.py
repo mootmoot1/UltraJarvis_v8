@@ -169,7 +169,7 @@ class NaturalTaskRunner:
     def _write_files(self, files_data: List[Dict[str, str]], output_dir: str):
         """Write files with logging and change detection"""
         for file_data in files_data:
-            filepath = Path(output_dir) / file_data["path"]
+            filepath = Path(file_data["path"])
             content = file_data["content"]
 
             filepath.parent.mkdir(parents=True, exist_ok=True)
