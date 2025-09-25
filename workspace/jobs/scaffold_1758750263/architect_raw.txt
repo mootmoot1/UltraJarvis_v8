@@ -1,0 +1,5 @@
+<<<FILES
+[
+  {"path": "workspace/jobs/plan.md", "content": "# Job Plan\n\n## Milestones\n- Architect\n- Write\n- Gates\n- Critic\n- Verify\n\n## Tasks\n- Define architecture\n- Implement features\n- Conduct tests\n- Review code\n- Validate results"}
+]
+FILES>>>

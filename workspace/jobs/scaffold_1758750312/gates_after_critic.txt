@@ -1,0 +1,1364 @@
+$ ruff check --quiet .
+E401 [*] Multiple imports on one line
+ --> cloud_bridge.py:2:1
+  |
+1 | # core/cloud_bridge.py
+2 | import os, time, sys
+  | ^^^^^^^^^^^^^^^^^^^^
+3 | from typing import Optional
+  |
+help: Split imports
+
+F401 [*] `typing.Optional` imported but unused
+ --> cloud_bridge.py:3:20
+  |
+1 | # core/cloud_bridge.py
+2 | import os, time, sys
+3 | from typing import Optional
+  |                    ^^^^^^^^
+4 |
+5 | PROVIDER = os.getenv("MODEL_PROVIDER", "openai").lower()
+  |
+help: Remove unused import: `typing.Optional`
+
+E501 Line too long (104 > 88)
+  --> cloud_bridge.py:28:89
+   |
+26 |                     model=model,
+27 |                     messages=[
+28 |                         {"role":"system","content":"Be precise. Return the required FILES block only."},
+   |                                                                                         ^^^^^^^^^^^^^^^^
+29 |                         {"role":"user","content": prompt}
+30 |                     ],
+   |
+
+E701 Multiple statements on one line (colon)
+  --> cloud_bridge.py:34:27
+   |
+32 |                 )
+33 |                 out = (r.choices[0].message.content or "").strip()
+34 |                 if not out: _log("OpenAI returned empty content")
+   |                           ^
+35 |                 return out
+36 |             except Exception as e:
+   |
+
+E501 Line too long (104 > 88)
+  --> cloud_bridge.py:51:89
+   |
+49 |                     "model": model,
+50 |                     "messages": [
+51 |                         {"role":"system","content":"Be precise. Return the required FILES block only."},
+   |                                                                                         ^^^^^^^^^^^^^^^^
+52 |                         {"role":"user","content": prompt}
+53 |                     ],
+   |
+
+E701 Multiple statements on one line (colon)
+  --> cloud_bridge.py:59:27
+   |
+57 |                 data = res.json()
+58 |                 out = (data["choices"][0]["message"]["content"] or "").strip()
+59 |                 if not out: _log("Local LLM returned empty content")
+   |                           ^
+60 |                 return out
+61 |             except Exception as e:
+   |
+
+W292 [*] No newline at end of file
+  --> cloud_bridge.py:67:18
+   |
+65 |     except Exception as e:
+66 |         _log(f"Local LLM not available: {e}")
+67 |         return ""
+   |                  ^
+   |
+help: Add trailing newline
+
+F401 [*] `typing.Optional` imported but unused
+ --> core/cloud_bridge.py:2:20
+  |
+1 | import os
+2 | from typing import Optional
+  |                    ^^^^^^^^
+3 |
+4 | PROVIDER = os.getenv("MODEL_PROVIDER", "openai").lower()
+  |
+help: Remove unused import: `typing.Optional`
+
+F821 Undefined name `out`
+  --> core/cloud_bridge.py:15:8
+   |
+14 | # Example of fixing E701
+15 | if not out:
+   |        ^^^
+16 |     _log("OpenAI returned empty content")
+   |
+
+F821 Undefined name `_log`
+  --> core/cloud_bridge.py:16:5
+   |
+14 | # Example of fixing E701
+15 | if not out:
+16 |     _log("OpenAI returned empty content")
+   |     ^^^^
+17 |
+18 | # Another example of fixing E701
+   |
+
+F821 Undefined name `out`
+  --> core/cloud_bridge.py:19:8
+   |
+18 | # Another example of fixing E701
+19 | if not out:
+   |        ^^^
+20 |     _log("Local LLM returned empty content")
+   |
+
+F821 Undefined name `_log`
+  --> core/cloud_bridge.py:20:5
+   |
+18 | # Another example of fixing E701
+19 | if not out:
+20 |     _log("Local LLM returned empty content")
+   |     ^^^^
+   |
+
+E501 Line too long (99 > 88)
+  --> core/job_worker.backup.py:12:89
+   |
+10 | def enqueue(prompt, output_dir=None):
+11 |     with open(QUEUE, "a") as f:
+12 |         f.write(json.dumps({"prompt": prompt, "output_dir": output_dir, "ts": time.time()}) + "\n")
+   |                                                                                         ^^^^^^^^^^^
+   |
+
+W292 [*] No newline at end of file
+  --> core/job_worker.backup.py:34:44
+   |
+32 |             rec = {"ok": False, "job": job, "err": str(e), "ts_done": time.time()}
+33 |         with open(DONE, "a") as f:
+34 |             f.write(json.dumps(rec) + "\n")
+   |                                            ^
+   |
+help: Add trailing newline
+
+F401 [*] `typing.Dict` imported but unused
+ --> core/job_worker.py:1:20
+  |
+1 | from typing import Dict
+  |                    ^^^^
+2 |
+3 | # Additional code here
+  |
+help: Remove unused import: `typing.Dict`
+
+E501 Line too long (104 > 88)
+  --> core/persistence.py:86:89
+   |
+84 |                 if tag:
+85 |                     cursor = conn.execute(
+86 |                         "SELECT timestamp, note, tag FROM notes WHERE tag = ? ORDER BY id DESC LIMIT ?",
+   |                                                                                         ^^^^^^^^^^^^^^^^
+87 |                         (tag, limit),
+88 |                     )
+   |
+
+E501 Line too long (90 > 88)
+  --> core/persistence.py:91:89
+   |
+89 |                 else:
+90 |                     cursor = conn.execute(
+91 |                         "SELECT timestamp, note, tag FROM notes ORDER BY id DESC LIMIT ?",
+   |                                                                                         ^^
+92 |                         (limit,),
+93 |                     )
+   |
+
+E501 Line too long (124 > 88)
+   --> core/persistence.py:108:89
+    |
+106 |             with sqlite3.connect(self.db_path) as conn:
+107 |                 conn.execute(
+108 |                     "INSERT INTO conversations (timestamp, user_input, assistant_response, session_id) VALUES (?, ?, ?, ?)",
+    |                                                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+109 |                     (
+110 |                         datetime.utcnow().isoformat() + "Z",
+    |
+
+E501 Line too long (140 > 88)
+   --> core/persistence.py:128:89
+    |
+126 | …
+127 | …
+128 | …input, assistant_response FROM conversations WHERE session_id = ? ORDER BY id DESC LIMIT ?",
+    |                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+129 | …
+130 | …
+    |
+
+E501 Line too long (119 > 88)
+   --> core/persistence.py:133:89
+    |
+131 |                 else:
+132 |                     cursor = conn.execute(
+133 |                         "SELECT timestamp, user_input, assistant_response FROM conversations ORDER BY id DESC LIMIT ?",
+    |                                                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+134 |                         (limit,),
+135 |                     )
+    |
+
+E501 Line too long (104 > 88)
+   --> core/persistence.py:148:89
+    |
+146 |             with sqlite3.connect(self.db_path) as conn:
+147 |                 cursor = conn.execute(
+148 |                     "SELECT timestamp, note, tag FROM notes WHERE note LIKE ? ORDER BY id DESC LIMIT ?",
+    |                                                                                         ^^^^^^^^^^^^^^^^
+149 |                     (f"%{query}%", limit),
+150 |                 )
+    |
+
+E501 Line too long (135 > 88)
+   --> core/persistence.py:163:89
+    |
+161 | … as conn:
+162 | …
+163 | … WHERE session_id = ? AND id = (SELECT MAX(id) FROM conversations WHERE session_id = ?)",
+    |                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+164 | …
+165 | …
+    |
+
+E501 Line too long (92 > 88)
+  --> core/quality.py:8:89
+   |
+ 6 |     logs = []
+ 7 |     try:
+ 8 |         ruff_result = subprocess.run(['ruff', 'check', '.'], capture_output=True, text=True)
+   |                                                                                         ^^^^
+ 9 |         logs.append(ruff_result.stdout)
+10 |         if ruff_result.returncode != 0:
+   |
+
+E501 Line too long (96 > 88)
+  --> core/quality.py:13:89
+   |
+11 |             return False, '\n'.join(logs)
+12 |
+13 |         black_result = subprocess.run(['black', '--check', '.'], capture_output=True, text=True)
+   |                                                                                         ^^^^^^^^
+14 |         logs.append(black_result.stdout)
+15 |         if black_result.returncode != 0:
+   |
+
+W292 [*] No newline at end of file
+  --> core/quality.py:25:71
+   |
+23 |         return True, '\n'.join(logs)
+24 |     except Exception:
+25 |         return False, 'An error occurred while running quality gates.'
+   |                                                                       ^
+   |
+help: Add trailing newline
+
+E501 Line too long (95 > 88)
+  --> core/watchdog.py:35:89
+   |
+33 |             self.disabled_actions[key] = current_time
+34 |             logger.warning(
+35 |                 f"Disabling {key} after {len(recent_failures)} failures in {self.time_window}s"
+   |                                                                                         ^^^^^^^
+36 |             )
+37 |             return True
+   |
+
+F841 Local variable `note` is assigned to but never used
+   --> jarvis.py:121:9
+    |
+119 |     tl = t.lower()
+120 |     if tl.startswith("remember "):
+121 |         note = t.split(" ", 1)[1]
+    |         ^^^^
+    |
+help: Remove assignment to unused variable `note`
+
+E501 Line too long (104 > 88)
+   --> jarvis.py:320:89
+    |
+318 |     _speak(
+319 |         "Online. Goal: {} | try: set goal <..>, expand phases, seed, run --batch 25, "
+320 |         "health scan, list tracks, add track content, show memory, note <text>, search <query>.".format(
+    |                                                                                         ^^^^^^^^^^^^^^^^
+321 |             STATE.get("goal") or "(none)"
+322 |         )
+    |
+
+E501 Line too long (126 > 88)
+  --> memory/persistence.py:47:89
+   |
+45 |         with sqlite3.connect(self.persistence.db_path) as conn:
+46 |             conn.execute(
+47 |                 "INSERT INTO commands (session_id, intent, text, created_at, success, duration_ms) VALUES (?, ?, ?, ?, ?, ?)",
+   |                                                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+48 |                 (
+49 |                     self.current_session_id,
+   |
+
+E501 Line too long (120 > 88)
+  --> memory/persistence.py:63:89
+   |
+61 |         with sqlite3.connect(self.persistence.db_path) as conn:
+62 |             cursor = conn.execute(
+63 |                 "SELECT intent, text, success, duration_ms FROM commands WHERE session_id = ? ORDER BY id DESC LIMIT ?",
+   |                                                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+64 |                 (self.current_session_id, limit),
+65 |             )
+   |
+
+E501 Line too long (139 > 88)
+  --> memory/persistence.py:94:89
+   |
+92 | …     for _ in range(n):
+93 | …         conn.execute(
+94 | …             "DELETE FROM conversations WHERE session_id = ? AND id = (SELECT MAX(id) FROM conversations WHERE session_id = ?)",
+   |                                                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+95 | …             (self.current_session_id, self.current_session_id),
+96 | …         )
+   |
+
+F401 [*] `signal` imported but unused
+ --> registry.py:5:8
+  |
+3 | import pkgutil
+4 | import time
+5 | import signal
+  |        ^^^^^^
+6 | import logging
+  |
+help: Remove unused import: `signal`
+
+F841 [*] Local variable `e` is assigned to but never used
+  --> registry.py:91:29
+   |
+89 |             )
+90 |
+91 |         except Exception as e:
+   |                             ^
+92 |             duration = time.time() - start_time
+   |
+help: Remove assignment to unused variable `e`
+
+F811 Redefinition of unused `get_tool_cache` from line 9
+   --> registry.py:199:5
+    |
+199 | def get_tool_cache():
+    |     ^^^^^^^^^^^^^^ `get_tool_cache` redefined here
+200 |     return _tool_cache
+    |
+   ::: registry.py:9:24
+    |
+  8 | from typing import Dict, Any, Callable
+  9 | from core.cache import get_tool_cache
+    |                        -------------- previous definition of `get_tool_cache` here
+ 10 |
+ 11 | logger = logging.getLogger(__name__)
+    |
+help: Remove definition: `get_tool_cache`
+
+W292 [*] No newline at end of file
+ --> tests/test_sanity.py:2:16
+  |
+1 | def test_sanity():
+2 |     assert True
+  |                ^
+  |
+help: Add trailing newline
+
+F401 [*] `typing.Optional` imported but unused
+  --> tools/devin_agent.py:9:37
+   |
+ 7 | from pathlib import Path
+ 8 | from datetime import datetime
+ 9 | from typing import Dict, List, Any, Optional
+   |                                     ^^^^^^^^
+10 |
+11 | MAX_FILES = int(os.getenv("UJ_DEVIN_MAX_FILES", "5"))
+   |
+help: Remove unused import: `typing.Optional`
+
+W293 Blank line contains whitespace
+   --> tools/devin_agent.py:139:1
+    |
+137 |         prompt = f"""
+138 |         Create a JSON plan for this task: {task}
+139 |         
+    | ^^^^^^^^
+140 |         Return only valid JSON in this format:
+141 |         {{"files": [{{"path": "relative/path.py", "action": "modify|create|delete", "reason": "brief reason"}}]}}
+    |
+help: Remove whitespace from blank line
+
+E501 Line too long (113 > 88)
+   --> tools/devin_agent.py:141:89
+    |
+140 |         Return only valid JSON in this format:
+141 |         {{"files": [{{"path": "relative/path.py", "action": "modify|create|delete", "reason": "brief reason"}}]}}
+    |                                                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^
+142 |         
+143 |         Limit to {MAX_FILES} files maximum.
+    |
+
+W293 Blank line contains whitespace
+   --> tools/devin_agent.py:142:1
+    |
+140 |         Return only valid JSON in this format:
+141 |         {{"files": [{{"path": "relative/path.py", "action": "modify|create|delete", "reason": "brief reason"}}]}}
+142 |         
+    | ^^^^^^^^
+143 |         Limit to {MAX_FILES} files maximum.
+144 |         Focus on minimal, targeted changes.
+    |
+help: Remove whitespace from blank line
+
+W293 Blank line contains whitespace
+   --> tools/devin_agent.py:184:1
+    |
+182 |             Create new file content for: {file_path}
+183 |             Task: {file_spec['reason']}
+184 |             
+    | ^^^^^^^^^^^^
+185 |             Return only the file content, no markdown fences.
+186 |             """
+    |
+help: Remove whitespace from blank line
+
+W293 Blank line contains whitespace
+   --> tools/devin_agent.py:201:1
+    |
+199 |             Current content:
+200 |             {current_content}
+201 |             
+    | ^^^^^^^^^^^^
+202 |             Task: {file_spec['reason']}
+    |
+help: Remove whitespace from blank line
+
+W293 Blank line contains whitespace
+   --> tools/devin_agent.py:203:1
+    |
+202 |             Task: {file_spec['reason']}
+203 |             
+    | ^^^^^^^^^^^^
+204 |             Return a unified diff in format:
+205 |             diff --git a/{file_path} b/{file_path}
+    |
+help: Remove whitespace from blank line
+
+F401 [*] `logging` imported but unused
+ --> uc.py:4:8
+  |
+2 | import argparse
+3 | import json
+4 | import logging
+  |        ^^^^^^^
+5 | from pathlib import Path
+  |
+help: Remove unused import: `logging`
+
+F401 [*] `pathlib.Path` imported but unused
+ --> uc.py:5:21
+  |
+3 | import json
+4 | import logging
+5 | from pathlib import Path
+  |                     ^^^^
+6 |
+7 | from registry import discover_tools, run_tool
+  |
+help: Remove unused import: `pathlib.Path`
+
+E501 Line too long (98 > 88)
+   --> uc.py:100:89
+    |
+ 98 |     print("\nQuick Summary:")
+ 99 |     print(
+100 |         f"  Runs: {summary['runs']}, Fails: {summary['fails']} ({summary['error_rate_percent']}%)"
+    |                                                                                         ^^^^^^^^^^
+101 |     )
+102 |     print(f"  Cache: {summary['cache_hits']} hits, {summary['cache_misses']} misses")
+    |
+
+E501 Line too long (108 > 88)
+   --> uc.py:104:89
+    |
+102 |     print(f"  Cache: {summary['cache_hits']} hits, {summary['cache_misses']} misses")
+103 |     print(
+104 |         f"  Latency: p50={summary['overall_latency_p50']:.1f}ms, p95={summary['overall_latency_p95']:.1f}ms"
+    |                                                                                         ^^^^^^^^^^^^^^^^^^^^
+105 |     )
+    |
+
+F841 Local variable `clear_p` is assigned to but never used
+   --> uc.py:242:5
+    |
+240 |     forget_p = sp.add_parser("forget-last")
+241 |     forget_p.add_argument("count", type=int, nargs="?", default=1)
+242 |     clear_p = sp.add_parser("clear-session")
+    |     ^^^^^^^
+243 |
+244 |     def _memory(a):
+    |
+help: Remove assignment to unused variable `clear_p`
+
+invalid-syntax: Expected a newline after line continuation character
+ --> workspace/jobs/job_323ea0/tool.py:1:30
+  |
+1 | def autogen_task(output_dir):\n    import pathlib\n    d=pathlib.Path(output_dir);d.mkdir(parents=True,exist_ok=True)\n    (d/'result.t…
+  |                              ^
+  |
+
+invalid-syntax: Simple statements must be separated by newlines or semicolons
+ --> workspace/jobs/job_323ea0/tool.py:1:36
+  |
+1 | def autogen_task(output_dir):\n    import pathlib\n    d=pathlib.Path(output_dir);d.mkdir(parents=True,exist_ok=True)\n    (d/'result.t…
+  |                                    ^^^^^^
+  |
+
+invalid-syntax: Expected a newline after line continuation character
+ --> workspace/jobs/job_323ea0/tool.py:1:50
+  |
+1 | def autogen_task(output_dir):\n    import pathlib\n    d=pathlib.Path(output_dir);d.mkdir(parents=True,exist_ok=True)\n    (d/'result.t…
+  |                                                  ^
+  |
+
+invalid-syntax: Expected ',', found name
+ --> workspace/jobs/job_323ea0/tool.py:1:56
+  |
+1 | def autogen_task(output_dir):\n    import pathlib\n    d=pathlib.Path(output_dir);d.mkdir(parents=True,exist_ok=True)\n    (d/'result.t…
+  |                                                        ^
+  |
+
+invalid-syntax: Expected ',', found '='
+ --> workspace/jobs/job_323ea0/tool.py:1:57
+  |
+1 | def autogen_task(output_dir):\n    import pathlib\n    d=pathlib.Path(output_dir);d.mkdir(parents=True,exist_ok=True)\n    (d/'result.t…
+  |                                                         ^
+  |
+
+invalid-syntax: Simple statements must be separated by newlines or semicolons
+ --> workspace/jobs/job_323ea0/tool.py:1:70
+  |
+1 | def autogen_task(output_dir):\n    import pathlib\n    d=pathlib.Path(output_dir);d.mkdir(parents=True,exist_ok=True)\n    (d/'result.t…
+  |                                                                      ^
+  |
+
+E702 Multiple statements on one line (semicolon)
+ --> workspace/jobs/job_323ea0/tool.py:1:82
+  |
+1 | def autogen_task(output_dir):\n    import pathlib\n    d=pathlib.Path(output_dir);d.mkdir(parents=True,exist_ok=True)\n    (d/'result.t…
+  |                                                                                  ^
+  |
+
+E501 Line too long (261 > 88)
+ --> workspace/jobs/job_323ea0/tool.py:1:89
+  |
+1 | ….mkdir(parents=True,exist_ok=True)\n    (d/'result.txt').write_text('Done: Add file-write sandbox in subprocess runner.')\n    return {'files':[str(d/'result.txt')],'notes':'ok'}
+  |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+
+invalid-syntax: Expected a newline after line continuation character
+ --> workspace/jobs/job_323ea0/tool.py:1:118
+  |
+1 | def autogen_task(output_dir):\n    import pathlib\n    d=pathlib.Path(output_dir);d.mkdir(parents=True,exist_ok=True)\n    (d/'result.t…
+  |                                                                                                                      ^
+  |
+
+invalid-syntax: Expected a newline after line continuation character
+ --> workspace/jobs/job_323ea0/tool.py:1:205
+  |
+1 | …).write_text('Done: Add file-write sandbox in subprocess runner.')\n    return {'files':[str(d/'result.txt')],'notes':'ok'}
+  |                                                                    ^
+  |
+
+invalid-syntax: Simple statements must be separated by newlines or semicolons
+ --> workspace/jobs/job_323ea0/tool.py:1:211
+  |
+1 | …text('Done: Add file-write sandbox in subprocess runner.')\n    return {'files':[str(d/'result.txt')],'notes':'ok'}
+  |                                                                  ^^^^^^
+  |
+
+W292 No newline at end of file
+ --> workspace/jobs/job_323ea0/tool.py:1:262
+  |
+1 | …runner.')\n    return {'files':[str(d/'result.txt')],'notes':'ok'}
+  |                                                                    ^
+  |
+help: Add trailing newline
+
+invalid-syntax: Expected a newline after line continuation character
+ --> workspace/jobs/job_409c1f/tool.py:1:30
+  |
+1 | def autogen_task(output_dir):\n    import pathlib\n    d=pathlib.Path(output_dir);d.mkdir(parents=True,exist_ok=True)\n    (d/'result.t…
+  |                              ^
+  |
+
+invalid-syntax: Simple statements must be separated by newlines or semicolons
+ --> workspace/jobs/job_409c1f/tool.py:1:36
+  |
+1 | def autogen_task(output_dir):\n    import pathlib\n    d=pathlib.Path(output_dir);d.mkdir(parents=True,exist_ok=True)\n    (d/'result.t…
+  |                                    ^^^^^^
+  |
+
+invalid-syntax: Expected a newline after line continuation character
+ --> workspace/jobs/job_409c1f/tool.py:1:50
+  |
+1 | def autogen_task(output_dir):\n    import pathlib\n    d=pathlib.Path(output_dir);d.mkdir(parents=True,exist_ok=True)\n    (d/'result.t…
+  |                                                  ^
+  |
+
+invalid-syntax: Expected ',', found name
+ --> workspace/jobs/job_409c1f/tool.py:1:56
+  |
+1 | def autogen_task(output_dir):\n    import pathlib\n    d=pathlib.Path(output_dir);d.mkdir(parents=True,exist_ok=True)\n    (d/'result.t…
+  |                                                        ^
+  |
+
+invalid-syntax: Expected ',', found '='
+ --> workspace/jobs/job_409c1f/tool.py:1:57
+  |
+1 | def autogen_task(output_dir):\n    import pathlib\n    d=pathlib.Path(output_dir);d.mkdir(parents=True,exist_ok=True)\n    (d/'result.t…
+  |                                                         ^
+  |
+
+invalid-syntax: Simple statements must be separated by newlines or semicolons
+ --> workspace/jobs/job_409c1f/tool.py:1:70
+  |
+1 | def autogen_task(output_dir):\n    import pathlib\n    d=pathlib.Path(output_dir);d.mkdir(parents=True,exist_ok=True)\n    (d/'result.t…
+  |                                                                      ^
+  |
+
+E702 Multiple statements on one line (semicolon)
+ --> workspace/jobs/job_409c1f/tool.py:1:82
+  |
+1 | def autogen_task(output_dir):\n    import pathlib\n    d=pathlib.Path(output_dir);d.mkdir(parents=True,exist_ok=True)\n    (d/'result.t…
+  |                                                                                  ^
+  |
+
+E501 Line too long (261 > 88)
+ --> workspace/jobs/job_409c1f/tool.py:1:89
+  |
+1 | ….mkdir(parents=True,exist_ok=True)\n    (d/'result.txt').write_text('Done: Add core/repo_index.py with repo_snapshot().')\n    return {'files':[str(d/'result.txt')],'notes':'ok'}
+  |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+
+invalid-syntax: Expected a newline after line continuation character
+ --> workspace/jobs/job_409c1f/tool.py:1:118
+  |
+1 | def autogen_task(output_dir):\n    import pathlib\n    d=pathlib.Path(output_dir);d.mkdir(parents=True,exist_ok=True)\n    (d/'result.t…
+  |                                                                                                                      ^
+  |
+
+invalid-syntax: Expected a newline after line continuation character
+ --> workspace/jobs/job_409c1f/tool.py:1:205
+  |
+1 | …).write_text('Done: Add core/repo_index.py with repo_snapshot().')\n    return {'files':[str(d/'result.txt')],'notes':'ok'}
+  |                                                                    ^
+  |
+
+invalid-syntax: Simple statements must be separated by newlines or semicolons
+ --> workspace/jobs/job_409c1f/tool.py:1:211
+  |
+1 | …text('Done: Add core/repo_index.py with repo_snapshot().')\n    return {'files':[str(d/'result.txt')],'notes':'ok'}
+  |                                                                  ^^^^^^
+  |
+
+W292 No newline at end of file
+ --> workspace/jobs/job_409c1f/tool.py:1:262
+  |
+1 | …shot().')\n    return {'files':[str(d/'result.txt')],'notes':'ok'}
+  |                                                                    ^
+  |
+help: Add trailing newline
+
+invalid-syntax: Expected a newline after line continuation character
+ --> workspace/jobs/job_5fcecd/tool.py:1:30
+  |
+1 | def autogen_task(output_dir):\n    import pathlib\n    d=pathlib.Path(output_dir);d.mkdir(parents=True,exist_ok=True)\n    (d/'result.t…
+  |                              ^
+  |
+
+invalid-syntax: Simple statements must be separated by newlines or semicolons
+ --> workspace/jobs/job_5fcecd/tool.py:1:36
+  |
+1 | def autogen_task(output_dir):\n    import pathlib\n    d=pathlib.Path(output_dir);d.mkdir(parents=True,exist_ok=True)\n    (d/'result.t…
+  |                                    ^^^^^^
+  |
+
+invalid-syntax: Expected a newline after line continuation character
+ --> workspace/jobs/job_5fcecd/tool.py:1:50
+  |
+1 | def autogen_task(output_dir):\n    import pathlib\n    d=pathlib.Path(output_dir);d.mkdir(parents=True,exist_ok=True)\n    (d/'result.t…
+  |                                                  ^
+  |
+
+invalid-syntax: Expected ',', found name
+ --> workspace/jobs/job_5fcecd/tool.py:1:56
+  |
+1 | def autogen_task(output_dir):\n    import pathlib\n    d=pathlib.Path(output_dir);d.mkdir(parents=True,exist_ok=True)\n    (d/'result.t…
+  |                                                        ^
+  |
+
+invalid-syntax: Expected ',', found '='
+ --> workspace/jobs/job_5fcecd/tool.py:1:57
+  |
+1 | def autogen_task(output_dir):\n    import pathlib\n    d=pathlib.Path(output_dir);d.mkdir(parents=True,exist_ok=True)\n    (d/'result.t…
+  |                                                         ^
+  |
+
+invalid-syntax: Simple statements must be separated by newlines or semicolons
+ --> workspace/jobs/job_5fcecd/tool.py:1:70
+  |
+1 | def autogen_task(output_dir):\n    import pathlib\n    d=pathlib.Path(output_dir);d.mkdir(parents=True,exist_ok=True)\n    (d/'result.t…
+  |                                                                      ^
+  |
+
+E702 Multiple statements on one line (semicolon)
+ --> workspace/jobs/job_5fcecd/tool.py:1:82
+  |
+1 | def autogen_task(output_dir):\n    import pathlib\n    d=pathlib.Path(output_dir);d.mkdir(parents=True,exist_ok=True)\n    (d/'result.t…
+  |                                                                                  ^
+  |
+
+E501 Line too long (288 > 88)
+ --> workspace/jobs/job_5fcecd/tool.py:1:89
+  |
+1 | ….mkdir(parents=True,exist_ok=True)\n    (d/'result.txt').write_text('Done: Upgrade core/natural_tasks.py to full architect→tests→code→critic loop.')\n    return {'files':[str(d/'result.txt')],'notes':'ok'}
+  |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+
+invalid-syntax: Expected a newline after line continuation character
+ --> workspace/jobs/job_5fcecd/tool.py:1:118
+  |
+1 | def autogen_task(output_dir):\n    import pathlib\n    d=pathlib.Path(output_dir);d.mkdir(parents=True,exist_ok=True)\n    (d/'result.t…
+  |                                                                                                                      ^
+  |
+
+invalid-syntax: Expected a newline after line continuation character
+ --> workspace/jobs/job_5fcecd/tool.py:1:232
+  |
+1 | … core/natural_tasks.py to full architect→tests→code→critic loop.')\n    return {'files':[str(d/'result.txt')],'notes':'ok'}
+  |                                                                    ^
+  |
+
+invalid-syntax: Simple statements must be separated by newlines or semicolons
+ --> workspace/jobs/job_5fcecd/tool.py:1:238
+  |
+1 | …tural_tasks.py to full architect→tests→code→critic loop.')\n    return {'files':[str(d/'result.txt')],'notes':'ok'}
+  |                                                                  ^^^^^^
+  |
+
+W292 No newline at end of file
+ --> workspace/jobs/job_5fcecd/tool.py:1:289
+  |
+1 | …c loop.')\n    return {'files':[str(d/'result.txt')],'notes':'ok'}
+  |                                                                    ^
+  |
+help: Add trailing newline
+
+invalid-syntax: Expected a newline after line continuation character
+ --> workspace/jobs/job_8632c2/tool.py:1:30
+  |
+1 | def autogen_task(output_dir):\n    import pathlib\n    d=pathlib.Path(output_dir);d.mkdir(parents=True,exist_ok=True)\n    (d/'result.t…
+  |                              ^
+  |
+
+invalid-syntax: Simple statements must be separated by newlines or semicolons
+ --> workspace/jobs/job_8632c2/tool.py:1:36
+  |
+1 | def autogen_task(output_dir):\n    import pathlib\n    d=pathlib.Path(output_dir);d.mkdir(parents=True,exist_ok=True)\n    (d/'result.t…
+  |                                    ^^^^^^
+  |
+
+invalid-syntax: Expected a newline after line continuation character
+ --> workspace/jobs/job_8632c2/tool.py:1:50
+  |
+1 | def autogen_task(output_dir):\n    import pathlib\n    d=pathlib.Path(output_dir);d.mkdir(parents=True,exist_ok=True)\n    (d/'result.t…
+  |                                                  ^
+  |
+
+invalid-syntax: Expected ',', found name
+ --> workspace/jobs/job_8632c2/tool.py:1:56
+  |
+1 | def autogen_task(output_dir):\n    import pathlib\n    d=pathlib.Path(output_dir);d.mkdir(parents=True,exist_ok=True)\n    (d/'result.t…
+  |                                                        ^
+  |
+
+invalid-syntax: Expected ',', found '='
+ --> workspace/jobs/job_8632c2/tool.py:1:57
+  |
+1 | def autogen_task(output_dir):\n    import pathlib\n    d=pathlib.Path(output_dir);d.mkdir(parents=True,exist_ok=True)\n    (d/'result.t…
+  |                                                         ^
+  |
+
+invalid-syntax: Simple statements must be separated by newlines or semicolons
+ --> workspace/jobs/job_8632c2/tool.py:1:70
+  |
+1 | def autogen_task(output_dir):\n    import pathlib\n    d=pathlib.Path(output_dir);d.mkdir(parents=True,exist_ok=True)\n    (d/'result.t…
+  |                                                                      ^
+  |
+
+E702 Multiple statements on one line (semicolon)
+ --> workspace/jobs/job_8632c2/tool.py:1:82
+  |
+1 | def autogen_task(output_dir):\n    import pathlib\n    d=pathlib.Path(output_dir);d.mkdir(parents=True,exist_ok=True)\n    (d/'result.t…
+  |                                                                                  ^
+  |
+
+E501 Line too long (265 > 88)
+ --> workspace/jobs/job_8632c2/tool.py:1:89
+  |
+1 | ….mkdir(parents=True,exist_ok=True)\n    (d/'result.txt').write_text('Done: Generate verify.txt with QA bullets + pass/fail.')\n    return {'files':[str(d/'result.txt')],'notes':'ok'}
+  |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+
+invalid-syntax: Expected a newline after line continuation character
+ --> workspace/jobs/job_8632c2/tool.py:1:118
+  |
+1 | def autogen_task(output_dir):\n    import pathlib\n    d=pathlib.Path(output_dir);d.mkdir(parents=True,exist_ok=True)\n    (d/'result.t…
+  |                                                                                                                      ^
+  |
+
+invalid-syntax: Expected a newline after line continuation character
+ --> workspace/jobs/job_8632c2/tool.py:1:209
+  |
+1 | …ite_text('Done: Generate verify.txt with QA bullets + pass/fail.')\n    return {'files':[str(d/'result.txt')],'notes':'ok'}
+  |                                                                    ^
+  |
+
+invalid-syntax: Simple statements must be separated by newlines or semicolons
+ --> workspace/jobs/job_8632c2/tool.py:1:215
+  |
+1 | …('Done: Generate verify.txt with QA bullets + pass/fail.')\n    return {'files':[str(d/'result.txt')],'notes':'ok'}
+  |                                                                  ^^^^^^
+  |
+
+W292 No newline at end of file
+ --> workspace/jobs/job_8632c2/tool.py:1:266
+  |
+1 | …s/fail.')\n    return {'files':[str(d/'result.txt')],'notes':'ok'}
+  |                                                                    ^
+  |
+help: Add trailing newline
+
+invalid-syntax: Expected a newline after line continuation character
+ --> workspace/jobs/job_9fd37b/tool.py:1:30
+  |
+1 | def autogen_task(output_dir):\n    import pathlib\n    d=pathlib.Path(output_dir);d.mkdir(parents=True,exist_ok=True)\n    (d/'result.t…
+  |                              ^
+  |
+
+invalid-syntax: Simple statements must be separated by newlines or semicolons
+ --> workspace/jobs/job_9fd37b/tool.py:1:36
+  |
+1 | def autogen_task(output_dir):\n    import pathlib\n    d=pathlib.Path(output_dir);d.mkdir(parents=True,exist_ok=True)\n    (d/'result.t…
+  |                                    ^^^^^^
+  |
+
+invalid-syntax: Expected a newline after line continuation character
+ --> workspace/jobs/job_9fd37b/tool.py:1:50
+  |
+1 | def autogen_task(output_dir):\n    import pathlib\n    d=pathlib.Path(output_dir);d.mkdir(parents=True,exist_ok=True)\n    (d/'result.t…
+  |                                                  ^
+  |
+
+invalid-syntax: Expected ',', found name
+ --> workspace/jobs/job_9fd37b/tool.py:1:56
+  |
+1 | def autogen_task(output_dir):\n    import pathlib\n    d=pathlib.Path(output_dir);d.mkdir(parents=True,exist_ok=True)\n    (d/'result.t…
+  |                                                        ^
+  |
+
+invalid-syntax: Expected ',', found '='
+ --> workspace/jobs/job_9fd37b/tool.py:1:57
+  |
+1 | def autogen_task(output_dir):\n    import pathlib\n    d=pathlib.Path(output_dir);d.mkdir(parents=True,exist_ok=True)\n    (d/'result.t…
+  |                                                         ^
+  |
+
+invalid-syntax: Simple statements must be separated by newlines or semicolons
+ --> workspace/jobs/job_9fd37b/tool.py:1:70
+  |
+1 | def autogen_task(output_dir):\n    import pathlib\n    d=pathlib.Path(output_dir);d.mkdir(parents=True,exist_ok=True)\n    (d/'result.t…
+  |                                                                      ^
+  |
+
+E702 Multiple statements on one line (semicolon)
+ --> workspace/jobs/job_9fd37b/tool.py:1:82
+  |
+1 | def autogen_task(output_dir):\n    import pathlib\n    d=pathlib.Path(output_dir);d.mkdir(parents=True,exist_ok=True)\n    (d/'result.t…
+  |                                                                                  ^
+  |
+
+E501 Line too long (267 > 88)
+ --> workspace/jobs/job_9fd37b/tool.py:1:89
+  |
+1 | ….mkdir(parents=True,exist_ok=True)\n    (d/'result.txt').write_text('Done: Add core/arg_extract.py for NL→Args and integrate.')\n    return {'files':[str(d/'result.txt')],'notes':'ok'}
+  |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+
+invalid-syntax: Expected a newline after line continuation character
+ --> workspace/jobs/job_9fd37b/tool.py:1:118
+  |
+1 | def autogen_task(output_dir):\n    import pathlib\n    d=pathlib.Path(output_dir);d.mkdir(parents=True,exist_ok=True)\n    (d/'result.t…
+  |                                                                                                                      ^
+  |
+
+invalid-syntax: Expected a newline after line continuation character
+ --> workspace/jobs/job_9fd37b/tool.py:1:211
+  |
+1 | …e_text('Done: Add core/arg_extract.py for NL→Args and integrate.')\n    return {'files':[str(d/'result.txt')],'notes':'ok'}
+  |                                                                    ^
+  |
+
+invalid-syntax: Simple statements must be separated by newlines or semicolons
+ --> workspace/jobs/job_9fd37b/tool.py:1:217
+  |
+1 | …Done: Add core/arg_extract.py for NL→Args and integrate.')\n    return {'files':[str(d/'result.txt')],'notes':'ok'}
+  |                                                                  ^^^^^^
+  |
+
+W292 No newline at end of file
+ --> workspace/jobs/job_9fd37b/tool.py:1:268
+  |
+1 | …egrate.')\n    return {'files':[str(d/'result.txt')],'notes':'ok'}
+  |                                                                    ^
+  |
+help: Add trailing newline
+
+invalid-syntax: Expected a newline after line continuation character
+ --> workspace/jobs/job_af8b79/tool.py:1:30
+  |
+1 | def autogen_task(output_dir):\n    import pathlib\n    d=pathlib.Path(output_dir);d.mkdir(parents=True,exist_ok=True)\n    (d/'result.t…
+  |                              ^
+  |
+
+invalid-syntax: Simple statements must be separated by newlines or semicolons
+ --> workspace/jobs/job_af8b79/tool.py:1:36
+  |
+1 | def autogen_task(output_dir):\n    import pathlib\n    d=pathlib.Path(output_dir);d.mkdir(parents=True,exist_ok=True)\n    (d/'result.t…
+  |                                    ^^^^^^
+  |
+
+invalid-syntax: Expected a newline after line continuation character
+ --> workspace/jobs/job_af8b79/tool.py:1:50
+  |
+1 | def autogen_task(output_dir):\n    import pathlib\n    d=pathlib.Path(output_dir);d.mkdir(parents=True,exist_ok=True)\n    (d/'result.t…
+  |                                                  ^
+  |
+
+invalid-syntax: Expected ',', found name
+ --> workspace/jobs/job_af8b79/tool.py:1:56
+  |
+1 | def autogen_task(output_dir):\n    import pathlib\n    d=pathlib.Path(output_dir);d.mkdir(parents=True,exist_ok=True)\n    (d/'result.t…
+  |                                                        ^
+  |
+
+invalid-syntax: Expected ',', found '='
+ --> workspace/jobs/job_af8b79/tool.py:1:57
+  |
+1 | def autogen_task(output_dir):\n    import pathlib\n    d=pathlib.Path(output_dir);d.mkdir(parents=True,exist_ok=True)\n    (d/'result.t…
+  |                                                         ^
+  |
+
+invalid-syntax: Simple statements must be separated by newlines or semicolons
+ --> workspace/jobs/job_af8b79/tool.py:1:70
+  |
+1 | def autogen_task(output_dir):\n    import pathlib\n    d=pathlib.Path(output_dir);d.mkdir(parents=True,exist_ok=True)\n    (d/'result.t…
+  |                                                                      ^
+  |
+
+E702 Multiple statements on one line (semicolon)
+ --> workspace/jobs/job_af8b79/tool.py:1:82
+  |
+1 | def autogen_task(output_dir):\n    import pathlib\n    d=pathlib.Path(output_dir);d.mkdir(parents=True,exist_ok=True)\n    (d/'result.t…
+  |                                                                                  ^
+  |
+
+E501 Line too long (278 > 88)
+ --> workspace/jobs/job_af8b79/tool.py:1:89
+  |
+1 | ….mkdir(parents=True,exist_ok=True)\n    (d/'result.txt').write_text('Done: Set up pyproject.toml for black/ruff/pytest and minimal test.')\n    return {'files':[str(d/'result.txt')],'notes':'ok'}
+  |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+
+invalid-syntax: Expected a newline after line continuation character
+ --> workspace/jobs/job_af8b79/tool.py:1:118
+  |
+1 | def autogen_task(output_dir):\n    import pathlib\n    d=pathlib.Path(output_dir);d.mkdir(parents=True,exist_ok=True)\n    (d/'result.t…
+  |                                                                                                                      ^
+  |
+
+invalid-syntax: Expected a newline after line continuation character
+ --> workspace/jobs/job_af8b79/tool.py:1:222
+  |
+1 | …e: Set up pyproject.toml for black/ruff/pytest and minimal test.')\n    return {'files':[str(d/'result.txt')],'notes':'ok'}
+  |                                                                    ^
+  |
+
+invalid-syntax: Simple statements must be separated by newlines or semicolons
+ --> workspace/jobs/job_af8b79/tool.py:1:228
+  |
+1 | …p pyproject.toml for black/ruff/pytest and minimal test.')\n    return {'files':[str(d/'result.txt')],'notes':'ok'}
+  |                                                                  ^^^^^^
+  |
+
+W292 No newline at end of file
+ --> workspace/jobs/job_af8b79/tool.py:1:279
+  |
+1 | …l test.')\n    return {'files':[str(d/'result.txt')],'notes':'ok'}
+  |                                                                    ^
+  |
+help: Add trailing newline
+
+invalid-syntax: Expected a newline after line continuation character
+ --> workspace/jobs/job_b3d77a/tool.py:1:30
+  |
+1 | def autogen_task(output_dir):\n    import pathlib\n    d=pathlib.Path(output_dir);d.mkdir(parents=True,exist_ok=True)\n    (d/'result.t…
+  |                              ^
+  |
+
+invalid-syntax: Simple statements must be separated by newlines or semicolons
+ --> workspace/jobs/job_b3d77a/tool.py:1:36
+  |
+1 | def autogen_task(output_dir):\n    import pathlib\n    d=pathlib.Path(output_dir);d.mkdir(parents=True,exist_ok=True)\n    (d/'result.t…
+  |                                    ^^^^^^
+  |
+
+invalid-syntax: Expected a newline after line continuation character
+ --> workspace/jobs/job_b3d77a/tool.py:1:50
+  |
+1 | def autogen_task(output_dir):\n    import pathlib\n    d=pathlib.Path(output_dir);d.mkdir(parents=True,exist_ok=True)\n    (d/'result.t…
+  |                                                  ^
+  |
+
+invalid-syntax: Expected ',', found name
+ --> workspace/jobs/job_b3d77a/tool.py:1:56
+  |
+1 | def autogen_task(output_dir):\n    import pathlib\n    d=pathlib.Path(output_dir);d.mkdir(parents=True,exist_ok=True)\n    (d/'result.t…
+  |                                                        ^
+  |
+
+invalid-syntax: Expected ',', found '='
+ --> workspace/jobs/job_b3d77a/tool.py:1:57
+  |
+1 | def autogen_task(output_dir):\n    import pathlib\n    d=pathlib.Path(output_dir);d.mkdir(parents=True,exist_ok=True)\n    (d/'result.t…
+  |                                                         ^
+  |
+
+invalid-syntax: Simple statements must be separated by newlines or semicolons
+ --> workspace/jobs/job_b3d77a/tool.py:1:70
+  |
+1 | def autogen_task(output_dir):\n    import pathlib\n    d=pathlib.Path(output_dir);d.mkdir(parents=True,exist_ok=True)\n    (d/'result.t…
+  |                                                                      ^
+  |
+
+E702 Multiple statements on one line (semicolon)
+ --> workspace/jobs/job_b3d77a/tool.py:1:82
+  |
+1 | def autogen_task(output_dir):\n    import pathlib\n    d=pathlib.Path(output_dir);d.mkdir(parents=True,exist_ok=True)\n    (d/'result.t…
+  |                                                                                  ^
+  |
+
+E501 Line too long (270 > 88)
+ --> workspace/jobs/job_b3d77a/tool.py:1:89
+  |
+1 | ….mkdir(parents=True,exist_ok=True)\n    (d/'result.txt').write_text('Done: Create docs/CONSTITUTION.md with strict coding rules.')\n    return {'files':[str(d/'result.txt')],'notes':'ok'}
+  |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+
+invalid-syntax: Expected a newline after line continuation character
+ --> workspace/jobs/job_b3d77a/tool.py:1:118
+  |
+1 | def autogen_task(output_dir):\n    import pathlib\n    d=pathlib.Path(output_dir);d.mkdir(parents=True,exist_ok=True)\n    (d/'result.t…
+  |                                                                                                                      ^
+  |
+
+invalid-syntax: Expected a newline after line continuation character
+ --> workspace/jobs/job_b3d77a/tool.py:1:214
+  |
+1 | …ext('Done: Create docs/CONSTITUTION.md with strict coding rules.')\n    return {'files':[str(d/'result.txt')],'notes':'ok'}
+  |                                                                    ^
+  |
+
+invalid-syntax: Simple statements must be separated by newlines or semicolons
+ --> workspace/jobs/job_b3d77a/tool.py:1:220
+  |
+1 | …e: Create docs/CONSTITUTION.md with strict coding rules.')\n    return {'files':[str(d/'result.txt')],'notes':'ok'}
+  |                                                                  ^^^^^^
+  |
+
+W292 No newline at end of file
+ --> workspace/jobs/job_b3d77a/tool.py:1:271
+  |
+1 | … rules.')\n    return {'files':[str(d/'result.txt')],'notes':'ok'}
+  |                                                                    ^
+  |
+help: Add trailing newline
+
+invalid-syntax: Expected a newline after line continuation character
+ --> workspace/jobs/job_c79470/tool.py:1:30
+  |
+1 | def autogen_task(output_dir):\n    import pathlib\n    d=pathlib.Path(output_dir);d.mkdir(parents=True,exist_ok=True)\n    (d/'result.t…
+  |                              ^
+  |
+
+invalid-syntax: Simple statements must be separated by newlines or semicolons
+ --> workspace/jobs/job_c79470/tool.py:1:36
+  |
+1 | def autogen_task(output_dir):\n    import pathlib\n    d=pathlib.Path(output_dir);d.mkdir(parents=True,exist_ok=True)\n    (d/'result.t…
+  |                                    ^^^^^^
+  |
+
+invalid-syntax: Expected a newline after line continuation character
+ --> workspace/jobs/job_c79470/tool.py:1:50
+  |
+1 | def autogen_task(output_dir):\n    import pathlib\n    d=pathlib.Path(output_dir);d.mkdir(parents=True,exist_ok=True)\n    (d/'result.t…
+  |                                                  ^
+  |
+
+invalid-syntax: Expected ',', found name
+ --> workspace/jobs/job_c79470/tool.py:1:56
+  |
+1 | def autogen_task(output_dir):\n    import pathlib\n    d=pathlib.Path(output_dir);d.mkdir(parents=True,exist_ok=True)\n    (d/'result.t…
+  |                                                        ^
+  |
+
+invalid-syntax: Expected ',', found '='
+ --> workspace/jobs/job_c79470/tool.py:1:57
+  |
+1 | def autogen_task(output_dir):\n    import pathlib\n    d=pathlib.Path(output_dir);d.mkdir(parents=True,exist_ok=True)\n    (d/'result.t…
+  |                                                         ^
+  |
+
+invalid-syntax: Simple statements must be separated by newlines or semicolons
+ --> workspace/jobs/job_c79470/tool.py:1:70
+  |
+1 | def autogen_task(output_dir):\n    import pathlib\n    d=pathlib.Path(output_dir);d.mkdir(parents=True,exist_ok=True)\n    (d/'result.t…
+  |                                                                      ^
+  |
+
+E702 Multiple statements on one line (semicolon)
+ --> workspace/jobs/job_c79470/tool.py:1:82
+  |
+1 | def autogen_task(output_dir):\n    import pathlib\n    d=pathlib.Path(output_dir);d.mkdir(parents=True,exist_ok=True)\n    (d/'result.t…
+  |                                                                                  ^
+  |
+
+E501 Line too long (268 > 88)
+ --> workspace/jobs/job_c79470/tool.py:1:89
+  |
+1 | ….mkdir(parents=True,exist_ok=True)\n    (d/'result.txt').write_text('Done: Create core/prompts.py with TOOLSMITH_SYSTEM rules.')\n    return {'files':[str(d/'result.txt')],'notes':'ok'}
+  |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+
+invalid-syntax: Expected a newline after line continuation character
+ --> workspace/jobs/job_c79470/tool.py:1:118
+  |
+1 | def autogen_task(output_dir):\n    import pathlib\n    d=pathlib.Path(output_dir);d.mkdir(parents=True,exist_ok=True)\n    (d/'result.t…
+  |                                                                                                                      ^
+  |
+
+invalid-syntax: Expected a newline after line continuation character
+ --> workspace/jobs/job_c79470/tool.py:1:212
+  |
+1 | …_text('Done: Create core/prompts.py with TOOLSMITH_SYSTEM rules.')\n    return {'files':[str(d/'result.txt')],'notes':'ok'}
+  |                                                                    ^
+  |
+
+invalid-syntax: Simple statements must be separated by newlines or semicolons
+ --> workspace/jobs/job_c79470/tool.py:1:218
+  |
+1 | …one: Create core/prompts.py with TOOLSMITH_SYSTEM rules.')\n    return {'files':[str(d/'result.txt')],'notes':'ok'}
+  |                                                                  ^^^^^^
+  |
+
+W292 No newline at end of file
+ --> workspace/jobs/job_c79470/tool.py:1:269
+  |
+1 | … rules.')\n    return {'files':[str(d/'result.txt')],'notes':'ok'}
+  |                                                                    ^
+  |
+help: Add trailing newline
+
+invalid-syntax: Expected a newline after line continuation character
+ --> workspace/jobs/job_f4e191/tool.py:1:30
+  |
+1 | def autogen_task(output_dir):\n    import pathlib\n    d=pathlib.Path(output_dir);d.mkdir(parents=True,exist_ok=True)\n    (d/'result.t…
+  |                              ^
+  |
+
+invalid-syntax: Simple statements must be separated by newlines or semicolons
+ --> workspace/jobs/job_f4e191/tool.py:1:36
+  |
+1 | def autogen_task(output_dir):\n    import pathlib\n    d=pathlib.Path(output_dir);d.mkdir(parents=True,exist_ok=True)\n    (d/'result.t…
+  |                                    ^^^^^^
+  |
+
+invalid-syntax: Expected a newline after line continuation character
+ --> workspace/jobs/job_f4e191/tool.py:1:50
+  |
+1 | def autogen_task(output_dir):\n    import pathlib\n    d=pathlib.Path(output_dir);d.mkdir(parents=True,exist_ok=True)\n    (d/'result.t…
+  |                                                  ^
+  |
+
+invalid-syntax: Expected ',', found name
+ --> workspace/jobs/job_f4e191/tool.py:1:56
+  |
+1 | def autogen_task(output_dir):\n    import pathlib\n    d=pathlib.Path(output_dir);d.mkdir(parents=True,exist_ok=True)\n    (d/'result.t…
+  |                                                        ^
+  |
+
+invalid-syntax: Expected ',', found '='
+ --> workspace/jobs/job_f4e191/tool.py:1:57
+  |
+1 | def autogen_task(output_dir):\n    import pathlib\n    d=pathlib.Path(output_dir);d.mkdir(parents=True,exist_ok=True)\n    (d/'result.t…
+  |                                                         ^
+  |
+
+invalid-syntax: Simple statements must be separated by newlines or semicolons
+ --> workspace/jobs/job_f4e191/tool.py:1:70
+  |
+1 | def autogen_task(output_dir):\n    import pathlib\n    d=pathlib.Path(output_dir);d.mkdir(parents=True,exist_ok=True)\n    (d/'result.t…
+  |                                                                      ^
+  |
+
+E702 Multiple statements on one line (semicolon)
+ --> workspace/jobs/job_f4e191/tool.py:1:82
+  |
+1 | def autogen_task(output_dir):\n    import pathlib\n    d=pathlib.Path(output_dir);d.mkdir(parents=True,exist_ok=True)\n    (d/'result.t…
+  |                                                                                  ^
+  |
+
+E501 Line too long (287 > 88)
+ --> workspace/jobs/job_f4e191/tool.py:1:89
+  |
+1 | ….mkdir(parents=True,exist_ok=True)\n    (d/'result.txt').write_text('Done: Add core/code_review.py with run_quality_gates() and critic_suggest().')\n    return {'files':[str(d/'result.txt')],'notes':'ok'}
+  |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+
+invalid-syntax: Expected a newline after line continuation character
+ --> workspace/jobs/job_f4e191/tool.py:1:118
+  |
+1 | def autogen_task(output_dir):\n    import pathlib\n    d=pathlib.Path(output_dir);d.mkdir(parents=True,exist_ok=True)\n    (d/'result.t…
+  |                                                                                                                      ^
+  |
+
+invalid-syntax: Expected a newline after line continuation character
+ --> workspace/jobs/job_f4e191/tool.py:1:231
+  |
+1 | …re/code_review.py with run_quality_gates() and critic_suggest().')\n    return {'files':[str(d/'result.txt')],'notes':'ok'}
+  |                                                                    ^
+  |
+
+invalid-syntax: Simple statements must be separated by newlines or semicolons
+ --> workspace/jobs/job_f4e191/tool.py:1:237
+  |
+1 | …review.py with run_quality_gates() and critic_suggest().')\n    return {'files':[str(d/'result.txt')],'notes':'ok'}
+  |                                                                  ^^^^^^
+  |
+
+W292 No newline at end of file
+ --> workspace/jobs/job_f4e191/tool.py:1:288
+  |
+1 | …gest().')\n    return {'files':[str(d/'result.txt')],'notes':'ok'}
+  |                                                                    ^
+  |
+help: Add trailing newline
+
+invalid-syntax: Expected a newline after line continuation character
+ --> workspace/jobs/job_f8a78a/tool.py:1:30
+  |
+1 | def autogen_task(output_dir):\n    import pathlib\n    d=pathlib.Path(output_dir);d.mkdir(parents=True,exist_ok=True)\n    (d/'result.t…
+  |                              ^
+  |
+
+invalid-syntax: Simple statements must be separated by newlines or semicolons
+ --> workspace/jobs/job_f8a78a/tool.py:1:36
+  |
+1 | def autogen_task(output_dir):\n    import pathlib\n    d=pathlib.Path(output_dir);d.mkdir(parents=True,exist_ok=True)\n    (d/'result.t…
+  |                                    ^^^^^^
+  |
+
+invalid-syntax: Expected a newline after line continuation character
+ --> workspace/jobs/job_f8a78a/tool.py:1:50
+  |
+1 | def autogen_task(output_dir):\n    import pathlib\n    d=pathlib.Path(output_dir);d.mkdir(parents=True,exist_ok=True)\n    (d/'result.t…
+  |                                                  ^
+  |
+
+invalid-syntax: Expected ',', found name
+ --> workspace/jobs/job_f8a78a/tool.py:1:56
+  |
+1 | def autogen_task(output_dir):\n    import pathlib\n    d=pathlib.Path(output_dir);d.mkdir(parents=True,exist_ok=True)\n    (d/'result.t…
+  |                                                        ^
+  |
+
+invalid-syntax: Expected ',', found '='
+ --> workspace/jobs/job_f8a78a/tool.py:1:57
+  |
+1 | def autogen_task(output_dir):\n    import pathlib\n    d=pathlib.Path(output_dir);d.mkdir(parents=True,exist_ok=True)\n    (d/'result.t…
+  |                                                         ^
+  |
+
+invalid-syntax: Simple statements must be separated by newlines or semicolons
+ --> workspace/jobs/job_f8a78a/tool.py:1:70
+  |
+1 | def autogen_task(output_dir):\n    import pathlib\n    d=pathlib.Path(output_dir);d.mkdir(parents=True,exist_ok=True)\n    (d/'result.t…
+  |                                                                      ^
+  |
+
+E702 Multiple statements on one line (semicolon)
+ --> workspace/jobs/job_f8a78a/tool.py:1:82
+  |
+1 | def autogen_task(output_dir):\n    import pathlib\n    d=pathlib.Path(output_dir);d.mkdir(parents=True,exist_ok=True)\n    (d/'result.t…
+  |                                                                                  ^
+  |
+
+E501 Line too long (265 > 88)
+ --> workspace/jobs/job_f8a78a/tool.py:1:89
+  |
+1 | ….mkdir(parents=True,exist_ok=True)\n    (d/'result.txt').write_text('Done: Append successful runs to workspace/skills.json.')\n    return {'files':[str(d/'result.txt')],'notes':'ok'}
+  |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+
+invalid-syntax: Expected a newline after line continuation character
+ --> workspace/jobs/job_f8a78a/tool.py:1:118
+  |
+1 | def autogen_task(output_dir):\n    import pathlib\n    d=pathlib.Path(output_dir);d.mkdir(parents=True,exist_ok=True)\n    (d/'result.t…
+  |                                                                                                                      ^
+  |
+
+invalid-syntax: Expected a newline after line continuation character
+ --> workspace/jobs/job_f8a78a/tool.py:1:209
+  |
+1 | …ite_text('Done: Append successful runs to workspace/skills.json.')\n    return {'files':[str(d/'result.txt')],'notes':'ok'}
+  |                                                                    ^
+  |
+
+invalid-syntax: Simple statements must be separated by newlines or semicolons
+ --> workspace/jobs/job_f8a78a/tool.py:1:215
+  |
+1 | …('Done: Append successful runs to workspace/skills.json.')\n    return {'files':[str(d/'result.txt')],'notes':'ok'}
+  |                                                                  ^^^^^^
+  |
+
+W292 No newline at end of file
+ --> workspace/jobs/job_f8a78a/tool.py:1:266
+  |
+1 | …s.json.')\n    return {'files':[str(d/'result.txt')],'notes':'ok'}
+  |                                                                    ^
+  |
+help: Add trailing newline
+
+

@@ -1,69 +1,83 @@
-import os
-import time
-import json
-import requests
+# core/cloud_bridge.py
+import os, time, sys
 from typing import Optional
+
+PROVIDER = os.getenv("MODEL_PROVIDER", "openai").lower()
+VERBOSE = os.getenv("LLM_VERBOSE", "1") == "1"
+
+
+def _log(msg: str):
+    if VERBOSE:
+        print(f"[cloud_bridge] {msg}", file=sys.stderr)
 
 
 def ask_cloud_ai(prompt: str) -> str:
-    """Provider-agnostic cloud AI interface"""
-    provider = os.getenv("MODEL_PROVIDER", "openai").lower()
-
-    if provider == "openai":
-        return _ask_openai(prompt)
-    elif provider in ("lmstudio", "ollama"):
-        return _ask_lmstudio(prompt)
-    else:
-        raise ValueError(f"Unsupported provider: {provider}")
-
-
-def _ask_openai(prompt: str) -> str:
-    """OpenAI API implementation"""
-    api_key = os.getenv("OPENAI_API_KEY")
-    if not api_key:
-        raise ValueError("OPENAI_API_KEY environment variable required")
-
-    model = os.getenv("MODEL_NAME", "gpt-4o-mini")
-
-    for attempt in range(3):
+    """Return model text or '' on failure (but log why)."""
+    if PROVIDER == "openai":
         try:
-            response = requests.post(
-                "https://api.openai.com/v1/chat/completions",
-                headers={"Authorization": f"Bearer {api_key}"},
-                json={
-                    "model": model,
-                    "messages": [{"role": "user", "content": prompt}],
-                    "temperature": 0.1,
-                },
-                timeout=30,
-            )
-            response.raise_for_status()
-            return response.json()["choices"][0]["message"]["content"]
+            from openai import OpenAI
+
+            client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+            model = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
         except Exception as e:
-            if attempt == 2:
-                raise Exception(f"OpenAI API failed after 3 attempts: {e}")
-            time.sleep(0.5 * (2**attempt))
+            _log(f"OpenAI init failed: {e}")
+            return ""
 
+        for attempt in range(3):
+            try:
+                r = client.chat.completions.create(
+                    model=model,
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": "Be precise. Return the required FILES block only.",
+                        },
+                        {"role": "user", "content": prompt},
+                    ],
+                    temperature=0.2,
+                )
+                out = (r.choices[0].message.content or "").strip()
+                if not out:
+                    _log("OpenAI returned empty content")
+                return out
+            except Exception as e:
+                _log(f"OpenAI call failed (try {attempt+1}/3): {e}")
+                time.sleep(1.0)
+        return ""
 
-def _ask_lmstudio(prompt: str) -> str:
-    """LM Studio/Ollama implementation"""
-    base_url = os.getenv("LMSTUDIO_BASE", "http://localhost:1234")
-    model = os.getenv("MODEL_NAME", "llama-3.2-3b-instruct")
+    # local server (LM Studio / Ollama-compatible)
+    try:
+        import requests
 
-    for attempt in range(3):
-        try:
-            response = requests.post(
-                f"{base_url}/v1/chat/completions",
-                json={
-                    "model": model,
-                    "messages": [{"role": "user", "content": prompt}],
-                    "temperature": 0.1,
-                },
-                timeout=30,
-            )
-            response.raise_for_status()
-            return response.json()["choices"][0]["message"]["content"]
-        except Exception as e:
-            if attempt == 2:
-                raise Exception(f"LM Studio API failed after 3 attempts: {e}")
-            time.sleep(0.5 * (2**attempt))
+        base = os.getenv("LMSTUDIO_BASE", "http://localhost:1234")
+        model = os.getenv("LMSTUDIO_MODEL", "llama-3.1-8b-instruct")
+        for attempt in range(3):
+            try:
+                res = requests.post(
+                    f"{base}/v1/chat/completions",
+                    json={
+                        "model": model,
+                        "messages": [
+                            {
+                                "role": "system",
+                                "content": "Be precise. Return the required FILES block only.",
+                            },
+                            {"role": "user", "content": prompt},
+                        ],
+                        "temperature": 0.2,
+                    },
+                    timeout=120,
+                )
+                res.raise_for_status()
+                data = res.json()
+                out = (data["choices"][0]["message"]["content"] or "").strip()
+                if not out:
+                    _log("Local LLM returned empty content")
+                return out
+            except Exception as e:
+                _log(f"Local LLM call failed (try {attempt+1}/3): {e}")
+                time.sleep(1.0)
+        return ""
+    except Exception as e:
+        _log(f"Local LLM not available: {e}")
+        return ""

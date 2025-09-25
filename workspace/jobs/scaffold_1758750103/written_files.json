@@ -1,0 +1,5 @@
+[
+  "pyproject.toml",
+  "pytest.ini",
+  "tests/test_sanity.py"
+]

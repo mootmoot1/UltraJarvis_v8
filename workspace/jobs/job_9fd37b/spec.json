@@ -1,0 +1,10 @@
+{
+  "name": "autogen_task",
+  "desc": "Add core/arg_extract.py for NL\u2192Args and integrate.",
+  "args": {
+    "output_dir": {
+      "type": "str",
+      "default": "/Users/freeman/Desktop/UltraJarvis_v8/workspace/jobs/job_9fd37b"
+    }
+  }
+}

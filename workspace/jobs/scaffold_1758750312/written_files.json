@@ -1,0 +1,4 @@
+[
+  "core/repo_index.py",
+  "tests/test_repo_index.py"
+]

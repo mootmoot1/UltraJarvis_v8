@@ -1,0 +1,8 @@
+<<<FILES
+[
+  {
+    "path": "core/natural_tasks.py",
+    "content": "def example_function(param: int) -> str:\n    \"\"\"Example function that returns a string representation of an integer.\"\"\"\n    return str(param)\n\n# Additional functions can be added here."
+  }
+]
+FILES>>>

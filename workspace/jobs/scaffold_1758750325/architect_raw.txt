@@ -1,0 +1,8 @@
+<<<FILES
+[
+  {
+    "path": "core/prompts.py",
+    "content": "TOOLSMITH_SYSTEM = 'You must return a <<<FILES>>> block only.'\nCRITIC_SYSTEM = 'This is the repair pass.'"
+  }
+]
+FILES>>>

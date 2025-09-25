@@ -1,0 +1,4 @@
+[
+  "core/cloud_bridge.py",
+  "core/job_worker.py"
+]

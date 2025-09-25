@@ -1,0 +1,12 @@
+<<<FILES
+[
+  {
+    "path": "core/repo_index.py",
+    "content": "import os\nfrom typing import List\n\n\ndef repo_snapshot(max_chars: int = 80000) -> str:\n    \"\"\"Concatenate small files in the repository up to a maximum character limit.\"\"\"\n    file_extensions = ['.py', '.md', '.toml', '.yml', '.json', '.ini']\n    repo_root = os.path.dirname(os.path.abspath(__file__))\n    concatenated_content = ''\n\n    for root, _, files in os.walk(repo_root):\n        for file in files:\n            if any(file.endswith(ext) for ext in file_extensions):\n                file_path = os.path.join(root, file)\n                with open(file_path, 'r', encoding='utf-8') as f:\n                    content = f.read()\n                    if len(concatenated_content) + len(content) <= max_chars:\n                        concatenated_content += content\n                    else:\n                        return concatenated_content\n    return concatenated_content\n"
+  },
+  {
+    "path": "tests/test_repo_index.py",
+    "content": "import pytest\nfrom core.repo_index import repo_snapshot\n\n\ndef test_repo_snapshot():\n    result = repo_snapshot(max_chars=1000)\n    assert isinstance(result, str)\n    assert len(result) <= 1000\n"
+  }
+]
+FILES>>>

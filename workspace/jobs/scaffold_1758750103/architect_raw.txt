@@ -1,0 +1,7 @@
+<<<FILES
+[
+  {"path": "pyproject.toml", "content": "[tool.black]\nline-length = 100\n\n[tool.ruff]\nline-length = 100"},
+  {"path": "pytest.ini", "content": "[pytest]\naddopts = --maxfail=1 --disable-warnings -q"},
+  {"path": "tests/test_sanity.py", "content": "def test_sanity():\n    assert True"}
+]
+FILES>>>

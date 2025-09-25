@@ -1,0 +1,8 @@
+<<<FILES
+[
+  {"path": "core/natural_tasks.py", "content": "def write_task(task: str) -> None:\n    \"\"\"Writes a task to the allowed directories.\"\"\"\n    allowed_dirs = ['docs', 'core', 'tests']\n    if any(dir in task for dir in allowed_dirs):\n        with open(f'{task}.txt', 'w') as f:\n            f.write(task)\n    else:\n        raise ValueError('Task not in allowed directories.')"},
+  {"path": "tests/test_natural_tasks.py", "content": "import pytest\nfrom core.natural_tasks import write_task\n\ndef test_write_task():\n    write_task('docs/example')\n    with open('docs/example.txt') as f:\n        assert f.read() == 'docs/example'"},
+  {"path": "pyproject.toml", "content": "[tool.black]\nline-length = 88\n[tool.ruff]\nselect = [\"E\", \"F\", \"W\"]"},
+  {"path": "pytest.ini", "content": "[pytest]\naddopts = -v --tb=short"}
+]
+FILES>>>

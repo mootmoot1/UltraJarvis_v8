@@ -1,0 +1,6 @@
+{"prompt": "Create docs/RESTART_OK.md with text: ok", "output_dir": null, "ts": 1758751923.721281}
+{"prompt": "Create docs/SMOKE_BRANCH.md with hello", "output_dir": null, "ts": 1758753433.6327538}
+{"prompt": "Create docs/SMOKE_BRANCH.md with hello from stabilize-worker", "output_dir": null, "ts": 1758753526.5674398}
+{"prompt": "Create a file hello.txt that says: hi", "output_dir": null, "ts": 1758771584.781188}
+{"prompt": {"job": "write_file", "args": {"path": "hello.txt", "content": "hi"}}, "output_dir": null, "ts": 1758771598.824491}
+{"prompt": {"job": "write_file", "args": {"path": "hello.txt", "content": "hi"}}, "output_dir": null, "ts": 1758771994.931734}

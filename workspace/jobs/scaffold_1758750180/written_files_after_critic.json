@@ -1,0 +1,6 @@
+[
+  "core/cloud_bridge.py",
+  "core/job_worker.py",
+  "tests/test_devin_patch_wrap.py",
+  "tests/test_tools_sanity.py"
+]

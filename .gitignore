@@ -1,7 +1,30 @@
+# Python
 __pycache__/
 *.pyc
 .venv/
 venv/
-logs/
-backup/
 .env
+# Node/Web
+node_modules/
+dist/
+build/
+# Data / Artifacts (add any big folders you have)
+data/
+datasets/
+cache/
+.cache/
+# Models / large binaries
+*.pt
+*.onnx
+*.bin
+*.ckpt
+# Media
+*.mp3
+*.wav
+*.flac
+# OS/IDE
+.DS_Store
+.idea/
+.vscode/
+# Zips
+*.zip

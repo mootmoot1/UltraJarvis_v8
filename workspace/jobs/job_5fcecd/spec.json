@@ -1,0 +1,10 @@
+{
+  "name": "autogen_task",
+  "desc": "Upgrade core/natural_tasks.py to full architect\u2192tests\u2192code\u2192critic loop.",
+  "args": {
+    "output_dir": {
+      "type": "str",
+      "default": "/Users/freeman/Desktop/UltraJarvis_v8/workspace/jobs/job_5fcecd"
+    }
+  }
+}

@@ -1,0 +1,8 @@
+<<<FILES
+[
+  {
+    "path": "docs/CONSTITUTION.md",
+    "content": "# UltraJarvis Coding Constitution\n\n## General Principles\n- Code must be clean, readable, and maintainable.\n- Follow PEP 8 style guidelines for Python code.\n- Use type hints for all function signatures.\n\n## Documentation\n- Every function must have a docstring explaining its purpose and usage.\n- Public classes and modules should have a top-level docstring.\n\n## Testing\n- Write unit tests for all new features and bug fixes.\n- Use pytest for testing; tests should be located in the `tests/` directory.\n- Aim for at least 80% test coverage.\n\n## Code Quality\n- Use `ruff` for linting and `black` for code formatting.\n- Ensure code passes all linting and formatting checks before merging.\n\n## Dependencies\n- Only use standard library modules unless absolutely necessary.\n- External dependencies must be listed in `requirements.txt` and should be minimal.\n\n## Version Control\n- Commit messages should be clear and descriptive.\n- Use branches for new features and bug fixes, merging into `main` only after review."
+  }
+]
+FILES>>>

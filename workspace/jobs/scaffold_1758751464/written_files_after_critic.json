@@ -1,0 +1,9 @@
+[
+  "core/cloud_bridge.py",
+  "core/job_worker.py",
+  "core/logger.py",
+  "core/persistence.py",
+  "core/quality.py",
+  "core/watchdog.py",
+  "tests/test_zip_output.py"
+]

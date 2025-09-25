@@ -1,0 +1,9 @@
+{
+  "ok": false,
+  "changed_files": [
+    "core/repo_index.py",
+    "tests/test_repo_index.py"
+  ],
+  "message": "CI still failing (see gates*.txt)",
+  "job_dir": "/Users/freeman/Desktop/UltraJarvis_v8/workspace/jobs/scaffold_1758750312"
+}

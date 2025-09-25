@@ -1,1 +1,17 @@
-[]
+[
+  {
+    "ts": "2025-09-22T20:52:56.856580Z",
+    "user": "help",
+    "assistant": "help"
+  },
+  {
+    "ts": "2025-09-22T20:53:05.182321Z",
+    "user": "help",
+    "assistant": "help"
+  },
+  {
+    "ts": "2025-09-22T20:53:46.853870Z",
+    "user": "status",
+    "assistant": "{\"ok\": true, \"pending\": 8}"
+  }
+]

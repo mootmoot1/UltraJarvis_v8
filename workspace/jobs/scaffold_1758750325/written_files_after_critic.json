@@ -1,0 +1,7 @@
+[
+  "core/prompts.py",
+  "core/cloud_bridge.py",
+  "core/persistence.py",
+  "core/quality.py",
+  "core/watchdog.py"
+]

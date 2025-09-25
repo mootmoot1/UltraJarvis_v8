@@ -1,0 +1,10 @@
+{
+  "name": "autogen_task",
+  "desc": "Add core/code_review.py with run_quality_gates() and critic_suggest().",
+  "args": {
+    "output_dir": {
+      "type": "str",
+      "default": "/Users/freeman/Desktop/UltraJarvis_v8/workspace/jobs/job_f4e191"
+    }
+  }
+}

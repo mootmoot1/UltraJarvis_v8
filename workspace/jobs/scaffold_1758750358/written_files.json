@@ -1,0 +1,6 @@
+[
+  "core/logger.py",
+  "tests/test_logger.py",
+  "pyproject.toml",
+  "pytest.ini"
+]

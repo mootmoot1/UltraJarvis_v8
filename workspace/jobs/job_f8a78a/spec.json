@@ -1,0 +1,10 @@
+{
+  "name": "autogen_task",
+  "desc": "Append successful runs to workspace/skills.json.",
+  "args": {
+    "output_dir": {
+      "type": "str",
+      "default": "/Users/freeman/Desktop/UltraJarvis_v8/workspace/jobs/job_f8a78a"
+    }
+  }
+}

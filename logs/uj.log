@@ -1,0 +1,3 @@
+{"timestamp": "2025-09-16T19:09:15.311800Z", "level": "WARNING", "message": "TTS timeout after 10.0s for: Online. Goal: test performance | try: set goal <....."}
+{"timestamp": "2025-09-16T19:10:27.288123Z", "level": "WARNING", "message": "TTS timeout after 10.0s for: Health: {\"ok\": true, \"checks\": [{\"name\": \"file:uc...."}
+{"timestamp": "2025-09-22T20:47:28.031129Z", "level": "WARNING", "message": "TTS timeout after 10.0s for: Online. Goal: Build AI empire | try: set goal <..>..."}

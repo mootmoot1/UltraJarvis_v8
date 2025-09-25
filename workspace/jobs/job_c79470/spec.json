@@ -1,0 +1,10 @@
+{
+  "name": "autogen_task",
+  "desc": "Create core/prompts.py with TOOLSMITH_SYSTEM rules.",
+  "args": {
+    "output_dir": {
+      "type": "str",
+      "default": "/Users/freeman/Desktop/UltraJarvis_v8/workspace/jobs/job_c79470"
+    }
+  }
+}

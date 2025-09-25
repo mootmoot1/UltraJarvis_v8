@@ -1,0 +1,10 @@
+{
+  "name": "autogen_task",
+  "desc": "Add file-write sandbox in subprocess runner.",
+  "args": {
+    "output_dir": {
+      "type": "str",
+      "default": "/Users/freeman/Desktop/UltraJarvis_v8/workspace/jobs/job_323ea0"
+    }
+  }
+}

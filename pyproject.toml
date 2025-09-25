@@ -1,37 +1,5 @@
-[build-system]
-requires = ["setuptools>=69", "wheel"]
-build-backend = "setuptools.build_meta"
-
-[project]
-name = "ultra-jarvis"
-version = "0.1.0"
-description = "UltraJarvis: roadmap + advisors + tools + conversational loop"
-authors = [{name="Freeman"}]
-readme = "README.md"
-requires-python = ">=3.9"
-dependencies = [
-  "requests>=2.25.0"
-]
-
-[tool.setuptools]
-package-dir = {"" = "."}
-packages = ["tools", "advisors"]
-py-modules = ["uc", "jarvis", "registry"]
-include-package-data = true
-
-# Include non-Python files at runtime
-[tool.setuptools.package-data]
-"*" = [
-  "data/*.json",
-  "project/*.md",
-  "logs/*.log"
-]
-
-[project.scripts]
-uj = "uc:main"
-uj-jarvis = "jarvis:loop"
+[tool.black]
+line-length = 88
 
 [tool.ruff]
-include = ["tools", "core", "advisors", "memory", "runtime", "tests"]
-exclude = [".venv", "site-packages", "demos", "ultra_jarvis.egg-info"]
-line-length = 100
+select = ["E", "F", "E501"]

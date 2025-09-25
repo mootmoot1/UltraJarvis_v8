@@ -1,0 +1,4 @@
+[
+  "core/job_worker.py",
+  "tests/test_devin_patch_wrap.py"
+]

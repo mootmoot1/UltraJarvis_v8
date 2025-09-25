@@ -1,0 +1,8 @@
+<<<FILES
+[
+  {
+    "path": "core/quality.py",
+    "content": "import subprocess\nfrom typing import Tuple\n\ndef run_quality_gates() -> Tuple[bool, str]:\n    \"\"\"Run quality gates: ruff, black, and pytest.\"\"\"\n    logs = []\n    try:\n        ruff_result = subprocess.run(['ruff', 'check', '.'], capture_output=True, text=True)\n        logs.append(ruff_result.stdout)\n        if ruff_result.returncode != 0:\n            return False, '\\n'.join(logs)\n\n        black_result = subprocess.run(['black', '--check', '.'], capture_output=True, text=True)\n        logs.append(black_result.stdout)\n        if black_result.returncode != 0:\n            return False, '\\n'.join(logs)\n\n        pytest_result = subprocess.run(['pytest', '-q'], capture_output=True, text=True)\n        logs.append(pytest_result.stdout)\n        if pytest_result.returncode != 0:\n            return False, '\\n'.join(logs)\n\n        return True, '\\n'.join(logs)\n    except Exception as e:\n        return False, str(e)"
+  }
+]
+FILES>>>

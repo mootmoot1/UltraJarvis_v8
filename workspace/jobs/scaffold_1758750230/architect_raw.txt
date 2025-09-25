@@ -1,0 +1,5 @@
+<<<FILES
+[
+  {"path": "workspace/skills.json", "content": "[{\"name\": \"pytest\", \"path\": \"venv/lib/python3.11/site-packages/pytest\", \"short_desc\": \"A framework that makes building simple and scalable test cases easy.\", \"example_usage\": \"pytest tests/\"}]"}
+]
+FILES>>>

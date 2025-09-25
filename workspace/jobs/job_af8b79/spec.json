@@ -1,0 +1,10 @@
+{
+  "name": "autogen_task",
+  "desc": "Set up pyproject.toml for black/ruff/pytest and minimal test.",
+  "args": {
+    "output_dir": {
+      "type": "str",
+      "default": "/Users/freeman/Desktop/UltraJarvis_v8/workspace/jobs/job_af8b79"
+    }
+  }
+}

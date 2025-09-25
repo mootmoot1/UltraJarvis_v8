@@ -1,0 +1,11 @@
+{
+  "ok": false,
+  "changed_files": [
+    "core/logger.py",
+    "tests/test_logger.py",
+    "pyproject.toml",
+    "pytest.ini"
+  ],
+  "message": "CI still failing (see gates*.txt)",
+  "job_dir": "/Users/freeman/Desktop/UltraJarvis_v8/workspace/jobs/scaffold_1758750358"
+}

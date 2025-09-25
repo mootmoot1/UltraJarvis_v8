@@ -1,0 +1,10 @@
+# Which model provider to use
+MODEL_PROVIDER=openai
+
+# OpenAI config
+OPENAI_API_KEY=sk-REPLACE_ME
+OPENAI_MODEL=gpt-4o-mini
+
+# (Optional) local model fallback; ignore for now
+LMSTUDIO_BASE=http://localhost:1234
+LMSTUDIO_MODEL=llama-3.1-8b-instruct

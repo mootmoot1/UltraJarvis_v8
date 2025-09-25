@@ -1,0 +1,8 @@
+<<<FILES
+[
+  {"path": "core/logger.py", "content": "import logging\nfrom datetime import datetime\n\n\ndef setup_logger() -> None:\n    logging.basicConfig(\n        filename=f'workspace/logs/{datetime.now().strftime(\"%Y-%m-%d\")}.log',\n        level=logging.INFO,\n        format='%(asctime)s - %(levelname)s - %(message)s'\n    )\n\n\ndef log_job(job_name: str, prompt_hash: str, files_written: list[str], gates_summary: str, critic_result: str) -> None:\n    logging.info(f'Job: {job_name}, Prompt Hash: {prompt_hash}, Files Written: {files_written}, Gates Summary: {gates_summary}, Critic Result: {critic_result}')\n"},
+  {"path": "tests/test_logger.py", "content": "import pytest\nfrom core.logger import setup_logger, log_job\n\n\n@pytest.fixture(autouse=True)\ndef run_around_tests():\n    setup_logger()\n    yield\n\n\ndef test_log_job(caplog):\n    log_job('test_job', 'hash123', ['file1.py', 'file2.py'], 'summary', 'result')\n    assert 'Job: test_job' in caplog.text\n    assert 'Prompt Hash: hash123' in caplog.text\n    assert 'Files Written: [' in caplog.text\n"},
+  {"path": "pyproject.toml", "content": "[tool.black]\nline-length = 88\n\n[tool.ruff]\nselect = [\"E\", \"F\"]\n"},
+  {"path": "pytest.ini", "content": "[pytest]\naddopts = --maxfail=1 --disable-warnings -q\n"}
+]
+FILES>>>

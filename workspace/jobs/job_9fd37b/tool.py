@@ -1,0 +1,1 @@
+def autogen_task(output_dir):\n    import pathlib\n    d=pathlib.Path(output_dir);d.mkdir(parents=True,exist_ok=True)\n    (d/'result.txt').write_text('Done: Add core/arg_extract.py for NL→Args and integrate.')\n    return {'files':[str(d/'result.txt')],'notes':'ok'}

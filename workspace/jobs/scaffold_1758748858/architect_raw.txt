@@ -1,0 +1,8 @@
+<<<FILES
+[
+  {
+    "path": "docs/CONSTITUTION.md",
+    "content": "# UltraJarvis Coding Constitution\n\n## General Principles\n- Code must be clean, readable, and maintainable.\n- Follow the DRY (Don't Repeat Yourself) principle.\n- Ensure code is modular and functions are single-purpose.\n\n## Code Style\n- Use PEP 8 for Python code style guidelines.\n- Use type hints for all function signatures.\n- Write docstrings for all public functions and classes.\n\n## Testing\n- Write unit tests for all new features and bug fixes.\n- Use pytest for testing framework.\n- Ensure tests cover edge cases and error handling.\n\n## Version Control\n- Commit often with clear, descriptive messages.\n- Use branches for new features and bug fixes.\n- Merge to main only after code review and passing tests.\n\n## Documentation\n- Document all public APIs and modules.\n- Keep README.md updated with relevant project information.\n\n## Dependencies\n- Use only standard library and specified installed dependencies (pytest, ruff, black, python-dotenv).\n- Keep requirements.txt updated with necessary packages."
+  }
+]
+FILES>>>

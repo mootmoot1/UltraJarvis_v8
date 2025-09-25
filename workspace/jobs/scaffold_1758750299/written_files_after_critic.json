@@ -1,0 +1,6 @@
+[
+  "core/natural_tasks.py",
+  "tests/test_natural_tasks.py",
+  "pyproject.toml",
+  "pytest.ini"
+]
